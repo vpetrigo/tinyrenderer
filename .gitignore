@@ -1,0 +1,6 @@
+# IDEA
+/.idea
+# Rust output
+/target
+# Renderer output
+**/*.tga
