@@ -3,7 +3,7 @@ use num::NumCast;
 use num_traits::{Float, Num};
 use std::default::Default;
 use std::fmt::{Display, Formatter, Result};
-use std::ops::{Add, Mul, Sub};
+use std::ops::{Add, Mul, MulAssign, Sub};
 
 #[derive(Default, Copy, Clone)]
 pub struct XYVector2<T: Num + Copy + Clone> {
@@ -122,11 +122,22 @@ pub union Vector3Repr<T: Num + NumCast + Copy + Clone> {
     raw: [T; 3],
 }
 
-pub struct Vector3<T: Num + NumCast + Copy + Clone> {
+pub trait VectorTrait: Num + NumCast + Copy + Clone + MulAssign {}
+
+macro_rules! vector_trait_def {
+    ($t:tt) => {
+        impl VectorTrait for $t {}
+    };
+}
+
+vector_trait_def!(i32);
+vector_trait_def!(f32);
+
+pub struct Vector3<T: VectorTrait> {
     repr: Vector3Repr<T>,
 }
 
-impl<T: Num + NumCast + Copy + Clone> Vector3<T> {
+impl<T: VectorTrait> Vector3<T> {
     pub fn new(x: T, y: T, z: T) -> Self {
         Vector3 {
             repr: Vector3Repr {
@@ -158,9 +169,17 @@ impl<T: Num + NumCast + Copy + Clone> Vector3<T> {
     pub fn norm_f64(&self) -> f64 {
         self.get_sum_of_squared_f64().sqrt()
     }
+
+    pub fn normalize(&mut self, l: f32) {
+        *self *= l as f32 / self.norm_f32();
+    }
+
+    pub fn normalize_default(&mut self) {
+        self.normalize(1.0f32)
+    }
 }
 
-impl<T: Num + NumCast + Default + Copy + Clone> Default for Vector3<T> {
+impl<T: Default + VectorTrait> Default for Vector3<T> {
     fn default() -> Self {
         Vector3 {
             repr: Vector3Repr {
@@ -170,37 +189,54 @@ impl<T: Num + NumCast + Default + Copy + Clone> Default for Vector3<T> {
     }
 }
 
-impl<T: Num + NumCast + Copy + Clone> Mul for Vector3<T> {
-    type Output = Self;
+impl<T: VectorTrait> Mul for Vector3<T> {
+    type Output = T;
 
     fn mul(self, rhs: Self) -> Self::Output {
         unsafe {
-            Vector3::<T>::new(
-                self.repr.xyzvector.x * rhs.repr.xyzvector.x,
-                self.repr.xyzvector.y * rhs.repr.xyzvector.y,
-                self.repr.xyzvector.z * rhs.repr.xyzvector.z,
-            )
+            self.repr.xyzvector.x * rhs.repr.xyzvector.x
+                + self.repr.xyzvector.y * rhs.repr.xyzvector.y
+                + self.repr.xyzvector.z * rhs.repr.xyzvector.z
         }
     }
 }
 
 impl<T, U> Mul<U> for Vector3<T>
 where
-    T: Num + NumCast + Copy + Clone,
+    T: VectorTrait,
     U: Float,
 {
-    type Output = U;
+    type Output = Self;
 
     fn mul(self, rhs: U) -> Self::Output {
         unsafe {
-            num::cast::<T, U>(self.repr.xyzvector.x).unwrap() * rhs
-                + num::cast::<T, U>(self.repr.xyzvector.y).unwrap() * rhs
-                + num::cast::<T, U>(self.repr.xyzvector.z).unwrap() * rhs
+            Vector3::<T>::new(
+                num::cast::<U, T>(num::cast::<T, U>(self.repr.xyzvector.x).unwrap() * rhs).unwrap(),
+                num::cast::<U, T>(num::cast::<T, U>(self.repr.xyzvector.y).unwrap() * rhs).unwrap(),
+                num::cast::<U, T>(num::cast::<T, U>(self.repr.xyzvector.z).unwrap() * rhs).unwrap(),
+            )
         }
     }
 }
 
-impl<T: Num + NumCast + Copy + Clone> Add for Vector3<T> {
+impl<T, U> MulAssign<U> for Vector3<T>
+where
+    T: VectorTrait,
+    U: Float,
+{
+    fn mul_assign(&mut self, rhs: U) {
+        unsafe {
+            self.repr.xyzvector.x =
+                num::cast::<U, T>(num::cast::<T, U>(self.repr.xyzvector.x).unwrap() * rhs).unwrap();
+            self.repr.xyzvector.y =
+                num::cast::<U, T>(num::cast::<T, U>(self.repr.xyzvector.x).unwrap() * rhs).unwrap();
+            self.repr.xyzvector.z =
+                num::cast::<U, T>(num::cast::<T, U>(self.repr.xyzvector.x).unwrap() * rhs).unwrap();
+        }
+    }
+}
+
+impl<T: VectorTrait> Add for Vector3<T> {
     type Output = Self;
 
     fn add(self, rhs: Self) -> Self::Output {
@@ -214,7 +250,7 @@ impl<T: Num + NumCast + Copy + Clone> Add for Vector3<T> {
     }
 }
 
-impl<T: Num + NumCast + Copy + Clone> Sub for Vector3<T> {
+impl<T: VectorTrait> Sub for Vector3<T> {
     type Output = Self;
 
     fn sub(self, rhs: Self) -> Self::Output {
@@ -228,7 +264,7 @@ impl<T: Num + NumCast + Copy + Clone> Sub for Vector3<T> {
     }
 }
 
-impl<T: Display + Num + NumCast + Copy + Clone> Display for Vector3<T> {
+impl<T: Display + VectorTrait> Display for Vector3<T> {
     fn fmt(&self, f: &mut Formatter<'_>) -> Result {
         unsafe {
             write!(
