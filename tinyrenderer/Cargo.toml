@@ -8,3 +8,5 @@ edition = "2018"
 
 [dependencies]
 tgaimage = { path = "../tgaimage" }
+num = "0.3"
+num-traits = "0.2"
