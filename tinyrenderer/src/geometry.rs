@@ -3,7 +3,7 @@ use num::NumCast;
 use num_traits::{Float, Num};
 use std::default::Default;
 use std::fmt::{Display, Formatter, Result};
-use std::ops::{Add, Mul, MulAssign, Sub};
+use std::ops::{Add, BitXor, Mul, MulAssign, Sub};
 
 #[derive(Default, Copy, Clone)]
 pub struct XYVector2<T: Num + Copy + Clone> {
@@ -189,6 +189,7 @@ impl<T: Default + VectorTrait> Default for Vector3<T> {
     }
 }
 
+/// Dot product
 impl<T: VectorTrait> Mul for Vector3<T> {
     type Output = T;
 
@@ -259,6 +260,24 @@ impl<T: VectorTrait> Sub for Vector3<T> {
                 self.repr.xyzvector.x - rhs.repr.xyzvector.x,
                 self.repr.xyzvector.y - rhs.repr.xyzvector.y,
                 self.repr.xyzvector.z - rhs.repr.xyzvector.z,
+            )
+        }
+    }
+}
+
+/// Cross product
+impl<T: VectorTrait> BitXor for Vector3<T> {
+    type Output = Self;
+
+    fn bitxor(self, rhs: Self) -> Self::Output {
+        unsafe {
+            Vector3::<T>::new(
+                self.repr.xyzvector.y * rhs.repr.xyzvector.z
+                    - self.repr.xyzvector.z * rhs.repr.xyzvector.z,
+                self.repr.xyzvector.z * rhs.repr.xyzvector.x
+                    - self.repr.xyzvector.x * rhs.repr.xyzvector.z,
+                self.repr.xyzvector.x * rhs.repr.xyzvector.y
+                    - self.repr.xyzvector.y * rhs.repr.xyzvector.x,
             )
         }
     }
