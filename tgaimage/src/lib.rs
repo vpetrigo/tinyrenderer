@@ -249,13 +249,9 @@ impl TGAImage {
 
             curpix += run_length as usize;
 
-            dbg!(run_length);
-
             if raw {
-                dbg!(run_length - 1);
                 out.write(&[run_length - 1])?;
             } else {
-                dbg!(run_length + 127);
                 out.write(&[run_length + 127])?;
             }
 
