@@ -176,14 +176,12 @@ impl TGAImage {
         self.height
     }
 
-    pub fn set(&mut self, x: u32, y: u32, color: TGAColor) {
-        if self.data.len() == 0 || x >= self.width || y >= self.height {
-            return;
+    pub fn set(&mut self, x: u32, y: u32, color: &TGAColor) {
+        if self.data.len() != 0 && x < self.width && y < self.height {
+            let offset = ((x + y * self.width) * self.bytespp as u32) as usize;
+            self.data[offset..(offset + self.bytespp as usize)]
+                .copy_from_slice(&color.bgra[..(self.bytespp as usize)]);
         }
-
-        let offset = ((x + y * self.width) * self.bytespp as u32) as usize;
-        self.data[offset..(offset + self.bytespp as usize)]
-            .copy_from_slice(&color.bgra[..(self.bytespp as usize)]);
     }
 
     pub fn flip_vertically(&mut self) {
@@ -210,6 +208,7 @@ impl TGAImage {
         const MAX_CHUNK_LENGTH: u8 = 128;
         let npixels: usize = (self.width * self.height) as usize;
         let mut curpix = 0;
+        let mut writer = std::io::BufWriter::new(out);
 
         while curpix < npixels {
             let chunkstart = curpix * self.bytespp as usize;
@@ -250,9 +249,9 @@ impl TGAImage {
             curpix += run_length as usize;
 
             if raw {
-                out.write(&[run_length - 1])?;
+                writer.write(&[run_length - 1])?;
             } else {
-                out.write(&[run_length + 127])?;
+                writer.write(&[run_length + 127])?;
             }
 
             let to_write = if raw {
@@ -261,7 +260,7 @@ impl TGAImage {
                 self.bytespp as usize
             };
 
-            out.write(self.data[chunkstart..chunkstart + to_write].as_ref())?;
+            writer.write(self.data[chunkstart..chunkstart + to_write].as_ref())?;
         }
 
         Ok(())
@@ -315,7 +314,6 @@ impl TGAImage {
 
 #[cfg(test)]
 mod tests_tgacolor {
-    // use crate::tgaimage::{ColorChannel, TGAColor};
     use super::*;
 
     #[test]
