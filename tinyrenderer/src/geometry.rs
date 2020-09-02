@@ -177,6 +177,18 @@ impl<T: VectorTrait> Vector3<T> {
     pub fn normalize_default(&mut self) {
         self.normalize(1.0f32)
     }
+
+    pub fn get_x(&self) -> T {
+        unsafe { self.repr.xyzvector.x }
+    }
+
+    pub fn get_y(&self) -> T {
+        unsafe { self.repr.xyzvector.y }
+    }
+
+    pub fn get_z(&self) -> T {
+        unsafe { self.repr.xyzvector.z }
+    }
 }
 
 impl<T: Default + VectorTrait> Default for Vector3<T> {
