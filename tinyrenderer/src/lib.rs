@@ -1,4 +1,3 @@
-extern crate tgaimage;
 pub mod geometry;
 pub mod model;
 
