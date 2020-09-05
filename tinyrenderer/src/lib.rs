@@ -8,7 +8,7 @@ pub fn line(
     mut y0: i32,
     mut x1: i32,
     mut y1: i32,
-    color: TGAColor,
+    color: &TGAColor,
     image: &mut TGAImage,
 ) {
     let mut steep = false;
