@@ -11,13 +11,13 @@ pub fn line(
     color: &TGAColor,
     image: &mut TGAImage,
 ) {
-    let mut steep = false;
-
-    if (x0 - x1).abs() < (y0 - y1).abs() {
+    let steep = if (x0 - x1).abs() < (y0 - y1).abs() {
         std::mem::swap(&mut x0, &mut y0);
         std::mem::swap(&mut x1, &mut y1);
-        steep = true;
-    }
+        true
+    } else {
+        false
+    };
 
     if x0 > x1 {
         std::mem::swap(&mut x0, &mut x1);
