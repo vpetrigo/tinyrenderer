@@ -1,3 +1,4 @@
+use core::mem;
 use num;
 use num::NumCast;
 use num_traits::{Float, Num};
@@ -5,45 +6,36 @@ use std::default::Default;
 use std::fmt::{Display, Formatter, Result};
 use std::ops::{Add, BitXor, Mul, MulAssign, Sub};
 
-#[derive(Default, Copy, Clone)]
-pub struct XYVector2<T: Num + Copy + Clone> {
+#[derive(Debug, Copy, Clone)]
+pub struct Vector2<T: Num + Copy + Clone> {
     x: T,
     y: T,
 }
 
-#[derive(Default, Copy, Clone)]
-pub struct UVVector2<T: Num + Copy + Clone> {
-    u: T,
-    v: T,
-}
-
-#[repr(C)]
-pub union Vector2Repr<T: Num + Copy + Clone> {
-    uvvector: UVVector2<T>,
-    xyvector: XYVector2<T>,
-    raw: [T; 2],
-}
-
-pub struct Vector2<T: Num + Copy + Clone> {
-    repr: Vector2Repr<T>,
-}
-
 impl<T: Num + Copy + Clone> Vector2<T> {
-    pub fn new(u: T, v: T) -> Self {
-        Vector2 {
-            repr: Vector2Repr {
-                uvvector: UVVector2 { u, v },
-            },
-        }
+    pub fn new(x: T, y: T) -> Self {
+        Vector2 { x, y }
+    }
+
+    pub fn swap(&mut self, rhs: &mut Self) {
+        mem::swap(&mut self.x, &mut rhs.x);
+        mem::swap(&mut self.y, &mut rhs.y);
+    }
+
+    pub fn get_x(&self) -> T {
+        self.x
+    }
+
+    pub fn get_y(&self) -> T {
+        self.y
     }
 }
 
 impl<T: Num + Default + Copy + Clone> Default for Vector2<T> {
     fn default() -> Self {
         Vector2 {
-            repr: Vector2Repr {
-                uvvector: UVVector2::default(),
-            },
+            x: T::default(),
+            y: T::default(),
         }
     }
 }
@@ -52,12 +44,7 @@ impl<T: Num + Copy + Clone> Mul for Vector2<T> {
     type Output = Self;
 
     fn mul(self, rhs: Self) -> Self::Output {
-        unsafe {
-            Vector2::<T>::new(
-                self.repr.uvvector.u * rhs.repr.uvvector.u,
-                self.repr.uvvector.v * rhs.repr.uvvector.v,
-            )
-        }
+        Vector2::<T>::new(self.x * rhs.x, self.y * rhs.y)
     }
 }
 
@@ -65,12 +52,7 @@ impl<T: Num + Copy + Clone> Add for Vector2<T> {
     type Output = Self;
 
     fn add(self, rhs: Self) -> Self::Output {
-        unsafe {
-            Vector2::<T>::new(
-                self.repr.uvvector.u + rhs.repr.uvvector.u,
-                self.repr.uvvector.v + rhs.repr.uvvector.v,
-            )
-        }
+        Vector2::<T>::new(self.x + rhs.x, self.y + rhs.y)
     }
 }
 
@@ -78,23 +60,13 @@ impl<T: Num + Copy + Clone> Sub for Vector2<T> {
     type Output = Self;
 
     fn sub(self, rhs: Self) -> Self::Output {
-        unsafe {
-            Vector2::<T>::new(
-                self.repr.uvvector.u - rhs.repr.uvvector.u,
-                self.repr.uvvector.v - rhs.repr.uvvector.v,
-            )
-        }
+        Vector2::<T>::new(self.x - rhs.x, self.y - rhs.y)
     }
 }
 
 impl<T: Display + Num + Copy + Clone> Display for Vector2<T> {
     fn fmt(&self, f: &mut Formatter<'_>) -> Result {
-        unsafe {
-            let x = self.repr.xyvector.x;
-            let y = self.repr.xyvector.y;
-
-            write!(f, "({}, {})", x, y)
-        }
+        write!(f, "({}, {})", self.x, self.y)
     }
 }
 
