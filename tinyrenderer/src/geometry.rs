@@ -22,6 +22,10 @@ impl<T: Num + Copy + Clone> Vector2<T> {
         mem::swap(&mut self.y, &mut rhs.y);
     }
 
+    pub fn swap_xy(&mut self) {
+        mem::swap(&mut self.x, &mut self.y);
+    }
+
     pub fn get_x(&self) -> T {
         self.x
     }
