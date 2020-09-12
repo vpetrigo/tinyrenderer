@@ -33,6 +33,14 @@ impl<T: Num + Copy + Clone> Vector2<T> {
     pub fn get_y(&self) -> T {
         self.y
     }
+
+    pub fn get_x_as_mut(&mut self) -> &mut T {
+        &mut self.x
+    }
+
+    pub fn get_y_as_mut(&mut self) -> &mut T {
+        &mut self.y
+    }
 }
 
 impl<T: Num + Default + Copy + Clone> Default for Vector2<T> {
@@ -261,7 +269,7 @@ impl<T: VectorTrait> BitXor for Vector3<T> {
         unsafe {
             Vector3::<T>::new(
                 self.repr.xyzvector.y * rhs.repr.xyzvector.z
-                    - self.repr.xyzvector.z * rhs.repr.xyzvector.z,
+                    - self.repr.xyzvector.z * rhs.repr.xyzvector.y,
                 self.repr.xyzvector.z * rhs.repr.xyzvector.x
                     - self.repr.xyzvector.x * rhs.repr.xyzvector.z,
                 self.repr.xyzvector.x * rhs.repr.xyzvector.y
