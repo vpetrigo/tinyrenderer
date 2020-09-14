@@ -1,6 +1,6 @@
 use tgaimage::{TGAColor, TGAImage, TGAImageFormat};
-use tinyrenderer::geometry::Vector2Int;
-use tinyrenderer::{line, triangle};
+use tinyrenderer::geometry::{Vector2, Vector2Int};
+use tinyrenderer::{line, triangle, triangle_barycentric};
 
 const WHITE: TGAColor = TGAColor::new_rgba(255, 255, 255, 255);
 const RED: TGAColor = TGAColor::new_rgba(255, 0, 0, 0);
@@ -22,10 +22,15 @@ fn main() {
     let v12 = Vector2Int::new(780, 410);
     let mut image = TGAImage::new(800, 800, TGAImageFormat::RGB);
 
-    triangle(v1, v2, v3, &WHITE, &mut image);
-    triangle(v4, v5, v6, &RED, &mut image);
-    triangle(v7, v8, v9, &GREEN, &mut image);
-    triangle(v10, v11, v12, &WHITE, &mut image);
+    // triangle(v1, v2, v3, &WHITE, &mut image);
+    // triangle(v4, v5, v6, &RED, &mut image);
+    // triangle(v7, v8, v9, &GREEN, &mut image);
+    // triangle(v10, v11, v12, &WHITE, &mut image);
+    triangle_barycentric(v1, v2, v3, &WHITE, &mut image);
+    triangle_barycentric(v4, v5, v6, &RED, &mut image);
+    triangle_barycentric(v7, v8, v9, &GREEN, &mut image);
+    triangle_barycentric(v10, v11, v12, &WHITE, &mut image);
+
     image
         .write_tga_file("triangles.tga", true, true)
         .expect("Cannot write image");
