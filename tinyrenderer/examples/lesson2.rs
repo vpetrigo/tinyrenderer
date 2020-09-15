@@ -1,10 +1,9 @@
-#![allow(dead_code)]
-#![allow(unused_imports)]
 use rand::random;
+
 use tgaimage::{TGAColor, TGAImage, TGAImageFormat};
-use tinyrenderer::geometry::{Vector2, Vector2Int, Vector3F32};
+use tinyrenderer::geometry::{Vector2Int, Vector3F32};
 use tinyrenderer::model::Model;
-use tinyrenderer::{line, triangle, triangle_barycentric};
+use tinyrenderer::triangle_barycentric;
 
 const WHITE: TGAColor = TGAColor::new_rgba(255, 255, 255, 255);
 const RED: TGAColor = TGAColor::new_rgba(255, 0, 0, 0);
@@ -46,6 +45,29 @@ fn main() {
     let light_dir = Vector3F32::new(0., 0., -1.);
 
     println!("v #{} f #{}", model.n_verts(), model.n_faces());
+
+    for i in 0..model.n_faces() {
+        let face = model.face(i);
+        let mut screen_coords = [Vector2Int::default(); 3];
+
+        for j in 0..3 {
+            let v0 = model.vert(face[j] as usize);
+            *screen_coords[j].get_x_as_mut() = ((v0.get_x() + 1.0) * width as f32 / 2.0) as i32;
+            *screen_coords[j].get_y_as_mut() = ((v0.get_y() + 1.0) * height as f32 / 2.0) as i32;
+        }
+
+        triangle_barycentric(
+            screen_coords[0],
+            screen_coords[1],
+            screen_coords[2],
+            &TGAColor::new_rgb(random(), random(), random()),
+            &mut image,
+        );
+    }
+
+    image
+        .write_tga_file("african_clown.tga", true, true)
+        .expect("Cannot write image");
 
     for i in 0..model.n_faces() {
         let face = model.face(i);
