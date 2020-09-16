@@ -10,3 +10,7 @@ edition = "2018"
 tgaimage = { path = "../tgaimage" }
 num = "0.3"
 num-traits = "0.2"
+
+[dev-dependencies]
+rand = "0.7"
+
