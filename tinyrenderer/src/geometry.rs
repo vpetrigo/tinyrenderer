@@ -99,6 +99,7 @@ pub struct UVVector3<T: Num + NumCast + Copy + Clone> {
     norm: T,
 }
 
+#[derive(Copy, Clone)]
 #[repr(C)]
 pub union Vector3Repr<T: Num + NumCast + Copy + Clone> {
     uvvector: UVVector3<T>,
@@ -117,11 +118,12 @@ macro_rules! vector_trait_def {
 vector_trait_def!(i32);
 vector_trait_def!(f32);
 
-pub struct Vector3<T: VectorTrait> {
+#[derive(Copy, Clone)]
+pub struct Vector3<T: Copy + Clone + VectorTrait> {
     repr: Vector3Repr<T>,
 }
 
-impl<T: VectorTrait> Vector3<T> {
+impl<T: Copy + Clone + VectorTrait> Vector3<T> {
     pub fn new(x: T, y: T, z: T) -> Self {
         Vector3 {
             repr: Vector3Repr {

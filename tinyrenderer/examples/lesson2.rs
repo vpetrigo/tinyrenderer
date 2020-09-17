@@ -1,5 +1,9 @@
+#![allow(dead_code)]
+#![allow(unused_imports)]
+use rand::random;
 use tgaimage::{TGAColor, TGAImage, TGAImageFormat};
-use tinyrenderer::geometry::{Vector2, Vector2Int};
+use tinyrenderer::geometry::{Vector2, Vector2Int, Vector3F32};
+use tinyrenderer::model::Model;
 use tinyrenderer::{line, triangle, triangle_barycentric};
 
 const WHITE: TGAColor = TGAColor::new_rgba(255, 255, 255, 255);
@@ -7,7 +11,7 @@ const RED: TGAColor = TGAColor::new_rgba(255, 0, 0, 0);
 const GREEN: TGAColor = TGAColor::new_rgba(0, 128, 0, 0);
 
 fn main() {
-    // first step
+    // first step (Triangles)
     let v1 = Vector2Int::new(100, 400);
     let v2 = Vector2Int::new(400, 400);
     let v3 = Vector2Int::new(250, 150);
@@ -34,4 +38,48 @@ fn main() {
     image
         .write_tga_file("triangles.tga", true, true)
         .expect("Cannot write image");
+    // Second step
+    let width = 800u32;
+    let height = 800u32;
+    let model = Model::new("african_head.obj").unwrap();
+    let mut image = TGAImage::new(width, height, TGAImageFormat::RGB);
+    let light_dir = Vector3F32::new(0., 0., -1.);
+
+    println!("v #{} f #{}", model.n_verts(), model.n_faces());
+
+    for i in 0..model.n_faces() {
+        let face = model.face(i);
+        let mut screen_coords = [Vector2Int::default(); 3];
+        let mut world_coords = [Vector3F32::default(); 3];
+
+        for j in 0..3 {
+            let v0 = model.vert(face[j] as usize);
+            *screen_coords[j].get_x_as_mut() = ((v0.get_x() + 1.0) * width as f32 / 2.0) as i32;
+            *screen_coords[j].get_y_as_mut() = ((v0.get_y() + 1.0) * height as f32 / 2.0) as i32;
+            world_coords[j] = *v0;
+        }
+
+        let mut n = (world_coords[2] - world_coords[0]) ^ (world_coords[1] - world_coords[0]);
+
+        n.normalize_default();
+        let intensity = n * light_dir;
+
+        if intensity > 0.0 {
+            triangle_barycentric(
+                screen_coords[0],
+                screen_coords[1],
+                screen_coords[2],
+                &TGAColor::new_rgb(
+                    (intensity * u8::max_value() as f32) as u8,
+                    (intensity * u8::max_value() as f32) as u8,
+                    (intensity * u8::max_value() as f32) as u8,
+                ),
+                &mut image,
+            );
+        }
+    }
+
+    image
+        .write_tga_file("africa_color.tga", true, true)
+        .expect("Cannot write file");
 }
