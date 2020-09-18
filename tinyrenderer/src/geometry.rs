@@ -228,9 +228,9 @@ where
             self.repr.xyzvector.x =
                 num::cast::<U, T>(num::cast::<T, U>(self.repr.xyzvector.x).unwrap() * rhs).unwrap();
             self.repr.xyzvector.y =
-                num::cast::<U, T>(num::cast::<T, U>(self.repr.xyzvector.x).unwrap() * rhs).unwrap();
+                num::cast::<U, T>(num::cast::<T, U>(self.repr.xyzvector.y).unwrap() * rhs).unwrap();
             self.repr.xyzvector.z =
-                num::cast::<U, T>(num::cast::<T, U>(self.repr.xyzvector.x).unwrap() * rhs).unwrap();
+                num::cast::<U, T>(num::cast::<T, U>(self.repr.xyzvector.z).unwrap() * rhs).unwrap();
         }
     }
 }
