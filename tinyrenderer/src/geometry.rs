@@ -295,3 +295,27 @@ impl<T: Display + VectorTrait> Display for Vector3<T> {
 
 pub type Vector3F32 = Vector3<f32>;
 pub type Vector3Int = Vector3<i32>;
+
+#[cfg(test)]
+mod test_vector3 {
+    use crate::geometry::Vector3F32;
+
+    #[test]
+    fn test_normalization() {
+        let mut v = Vector3F32::new(3.0, 4.0, 5.0);
+        let expected_sqrt = (3.0f32 * 3.0 + 4.0 * 4.0 + 5.0 * 5.0).sqrt();
+
+        assert_eq!(expected_sqrt, v.norm_f32());
+
+        let expected = Vector3F32::new(
+            3.0 as f32 / expected_sqrt,
+            4.0 as f32 / expected_sqrt,
+            5.0 as f32 / expected_sqrt,
+        );
+
+        v.normalize_default();
+        assert!((expected.get_x() - v.get_x()).abs() < 0.05);
+        assert!((expected.get_y() - v.get_y()).abs() < 0.05);
+        assert!((expected.get_z() - v.get_z()).abs() < 0.05);
+    }
+}
