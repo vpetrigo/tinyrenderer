@@ -192,16 +192,27 @@ fn fill_flat_triangle(
 
     let mut error_slope1 = 2 * slope1_params.dy - slope1_params.dx;
     let mut error_slope2 = 2 * slope2_params.dy - slope2_params.dx;
-    line(slope1.0, slope1.1, slope2.0, slope2.1, color, image);
+    // let mut error_slope1 = 0;
+    // let mut error_slope2 = 0;
+    let mut prev_y;
+    println!(
+        "Slope params 1: {:?}, slope params 2: {:?}",
+        slope1_params, slope2_params
+    );
 
     for _ in 0..=slope1_params.dx {
-        println!("slope1: {:?} - slope2: {:?}", slope1, slope2);
+        println!("start - slope1: {:?} - slope2: {:?}", slope1, slope2);
+        prev_y = slope1.1;
         line(slope1.0, slope1.1, slope2.0, slope2.1, color, image);
         next_slope_point(&mut slope1, &mut error_slope1, &slope1_params);
 
         while slope2.1 != slope1.1 {
+            // println!("mid - slope1: {:?} - slope2: {:?}", slope1, slope2);
             next_slope_point(&mut slope2, &mut error_slope2, &slope2_params);
         }
+        // println!("end   - slope1: {:?} - slope2: {:?}", slope1, slope2);
+        // assert_ne!(prev_y, slope1.1);
+        // println!("end - slope1: {:?} - slope2: {:?}", slope1, slope2);
     }
 }
 
@@ -210,6 +221,10 @@ fn get_slope_params(x0: i32, y0: i32, x1: i32, y1: i32) -> SlopeParameters {
     let dy = (y0 - y1).abs();
     let step_x = (x1 - x0).signum();
     let step_y = (y1 - y0).signum();
+    println!(
+        "dx: {}, dy: {}, step_x: {}, step_y: {}",
+        dx, dy, step_x, step_y
+    );
 
     if dx < dy {
         SlopeParameters::new(dy, dx, true, step_x, step_y)
@@ -219,14 +234,16 @@ fn get_slope_params(x0: i32, y0: i32, x1: i32, y1: i32) -> SlopeParameters {
 }
 
 fn next_slope_point(slope: &mut (i32, i32), slope_error: &mut i32, slope_params: &SlopeParameters) {
+    let derror = slope_params.dx * 2;
+
     while *slope_error >= 0 {
         if slope_params.is_steep {
             slope.0 += slope_params.x_step;
         } else {
-            slope.1 += slope_params.y_step;
+            slope.1 += slope_params.y_step
         }
 
-        *slope_error -= slope_params.dx * 2;
+        *slope_error -= derror;
     }
 
     if slope_params.is_steep {
@@ -236,4 +253,5 @@ fn next_slope_point(slope: &mut (i32, i32), slope_error: &mut i32, slope_params:
     }
 
     *slope_error += slope_params.dy * 2;
+    println!("next_slope_point: {:?}", slope);
 }
