@@ -1,9 +1,13 @@
 use tgaimage::{TGAColor, TGAImage};
 
 use crate::geometry::{Vector2, Vector2Int, Vector3F32};
+use crate::line::Line;
+use crate::point::Point;
 
 pub mod geometry;
+pub mod line;
 pub mod model;
+pub mod point;
 
 pub fn line(
     mut x0: i32,
@@ -156,27 +160,6 @@ pub fn triangle(
     }
 }
 
-#[derive(Debug)]
-struct SlopeParameters {
-    dx: i32,
-    dy: i32,
-    is_steep: bool,
-    x_step: i32,
-    y_step: i32,
-}
-
-impl SlopeParameters {
-    fn new(dx: i32, dy: i32, is_steep: bool, x_step: i32, y_step: i32) -> Self {
-        SlopeParameters {
-            dx,
-            dy,
-            is_steep,
-            x_step,
-            y_step,
-        }
-    }
-}
-
 fn fill_flat_triangle(
     v1: Vector2Int,
     v2: Vector2Int,
@@ -184,74 +167,38 @@ fn fill_flat_triangle(
     color: &TGAColor,
     image: &mut TGAImage,
 ) {
-    let mut slope1 = (v1.get_x(), v1.get_y());
-    let mut slope2 = slope1;
-
-    let slope1_params = get_slope_params(v1.get_x(), v1.get_y(), v2.get_x(), v2.get_y());
-    let slope2_params = get_slope_params(v1.get_x(), v1.get_y(), v3.get_x(), v3.get_y());
-
-    let mut error_slope1 = 2 * slope1_params.dy - slope1_params.dx;
-    let mut error_slope2 = 2 * slope2_params.dy - slope2_params.dx;
-    // let mut error_slope1 = 0;
-    // let mut error_slope2 = 0;
-    let mut prev_y;
-    println!(
-        "Slope params 1: {:?}, slope params 2: {:?}",
-        slope1_params, slope2_params
+    let slope1 = Line::new(
+        Point::new(v1.get_x(), v1.get_y()),
+        Point::new(v2.get_x(), v2.get_y()),
+    );
+    let slope2 = Line::new(
+        Point::new(v1.get_x(), v1.get_y()),
+        Point::new(v3.get_x(), v3.get_y()),
     );
 
-    for _ in 0..=slope1_params.dx {
-        println!("start - slope1: {:?} - slope2: {:?}", slope1, slope2);
-        prev_y = slope1.1;
-        line(slope1.0, slope1.1, slope2.0, slope2.1, color, image);
-        next_slope_point(&mut slope1, &mut error_slope1, &slope1_params);
-
-        while slope2.1 != slope1.1 {
-            // println!("mid - slope1: {:?} - slope2: {:?}", slope1, slope2);
-            next_slope_point(&mut slope2, &mut error_slope2, &slope2_params);
-        }
-        // println!("end   - slope1: {:?} - slope2: {:?}", slope1, slope2);
-        // assert_ne!(prev_y, slope1.1);
-        // println!("end - slope1: {:?} - slope2: {:?}", slope1, slope2);
-    }
-}
-
-fn get_slope_params(x0: i32, y0: i32, x1: i32, y1: i32) -> SlopeParameters {
-    let dx = (x0 - x1).abs();
-    let dy = (y0 - y1).abs();
-    let step_x = (x1 - x0).signum();
-    let step_y = (y1 - y0).signum();
-    println!(
-        "dx: {}, dy: {}, step_x: {}, step_y: {}",
-        dx, dy, step_x, step_y
-    );
-
-    if dx < dy {
-        SlopeParameters::new(dy, dx, true, step_x, step_y)
+    let y_range = if v1.get_y() < v2.get_y() {
+        v1.get_y()..=v2.get_y()
     } else {
-        SlopeParameters::new(dx, dy, false, step_x, step_y)
-    }
-}
+        v2.get_y()..=v1.get_y()
+    };
 
-fn next_slope_point(slope: &mut (i32, i32), slope_error: &mut i32, slope_params: &SlopeParameters) {
-    let derror = slope_params.dx * 2;
+    for y in y_range {
+        let mut min_p: i32 = i32::max_value();
+        let mut max_p: i32 = i32::min_value();
 
-    while *slope_error >= 0 {
-        if slope_params.is_steep {
-            slope.0 += slope_params.x_step;
-        } else {
-            slope.1 += slope_params.y_step
+        for slope in &[slope1, slope2] {
+            slope
+                .points()
+                .skip_while(|p| p.y != y)
+                .take_while(|p| p.y == y)
+                .for_each(|p| {
+                    min_p = min_p.min(p.x);
+                    max_p = max_p.max(p.x);
+                });
         }
 
-        *slope_error -= derror;
+        for x in min_p..=max_p {
+            image.set(x as u32, y as u32, color);
+        }
     }
-
-    if slope_params.is_steep {
-        slope.1 += slope_params.y_step;
-    } else {
-        slope.0 += slope_params.x_step;
-    }
-
-    *slope_error += slope_params.dy * 2;
-    println!("next_slope_point: {:?}", slope);
 }
