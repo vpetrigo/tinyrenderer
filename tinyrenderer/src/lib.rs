@@ -1,6 +1,6 @@
 use tgaimage::{TGAColor, TGAImage};
 
-use crate::geometry::{Vector2, Vector2Int, Vector3F32};
+use crate::geometry::{Vector2, Vector2Int, Vector3F32, Vector3Int};
 use crate::line::Line;
 use crate::point::Point;
 
