@@ -3,7 +3,7 @@ use rand::random;
 use tgaimage::{TGAColor, TGAImage, TGAImageFormat};
 use tinyrenderer::geometry::{Vector2Int, Vector3F32};
 use tinyrenderer::model::Model;
-use tinyrenderer::triangle_barycentric;
+use tinyrenderer::{triangle, triangle_barycentric};
 
 const WHITE: TGAColor = TGAColor::new_rgba(255, 255, 255, 255);
 const RED: TGAColor = TGAColor::new_rgba(255, 0, 0, 0);
@@ -25,19 +25,23 @@ fn main() {
     let v12 = Vector2Int::new(780, 410);
     let mut image = TGAImage::new(800, 800, TGAImageFormat::RGB);
 
-    // triangle(v1, v2, v3, &WHITE, &mut image);
-    // triangle(v4, v5, v6, &RED, &mut image);
-    // triangle(v7, v8, v9, &GREEN, &mut image);
-    // triangle(v10, v11, v12, &WHITE, &mut image);
-    triangle_barycentric(v1, v2, v3, &WHITE, &mut image);
-    triangle_barycentric(v4, v5, v6, &RED, &mut image);
-    triangle_barycentric(v7, v8, v9, &GREEN, &mut image);
-    triangle_barycentric(v10, v11, v12, &WHITE, &mut image);
+    triangle(v1, v2, v3, &WHITE, &mut image);
+    triangle(v4, v5, v6, &RED, &mut image);
+    triangle(v7, v8, v9, &GREEN, &mut image);
+    triangle(v10, v11, v12, &WHITE, &mut image);
+    // triangle_barycentric(v1, v2, v3, &WHITE, &mut image);
+    // triangle_barycentric(v4, v5, v6, &RED, &mut image);
+    // triangle_barycentric(v7, v8, v9, &GREEN, &mut image);
+    // triangle_barycentric(v10, v11, v12, &WHITE, &mut image);
 
     image
         .write_tga_file("triangles.tga", true, true)
         .expect("Cannot write image");
     // Second step
+    plot_head();
+}
+
+fn plot_head() {
     let width = 800u32;
     let height = 800u32;
     let model = Model::new("african_head.obj").unwrap();
@@ -45,7 +49,7 @@ fn main() {
     let light_dir = Vector3F32::new(0., 0., -1.);
 
     println!("v #{} f #{}", model.n_verts(), model.n_faces());
-
+    // plot random color head
     for i in 0..model.n_faces() {
         let face = model.face(i);
         let mut screen_coords = [Vector2Int::default(); 3];
@@ -68,7 +72,8 @@ fn main() {
     image
         .write_tga_file("african_clown.tga", true, true)
         .expect("Cannot write image");
-
+    image.clear();
+    // plot head with light
     for i in 0..model.n_faces() {
         let face = model.face(i);
         let mut screen_coords = [Vector2Int::default(); 3];
@@ -87,7 +92,7 @@ fn main() {
         let intensity = n * light_dir;
 
         if intensity > 0.0 {
-            triangle_barycentric(
+            triangle(
                 screen_coords[0],
                 screen_coords[1],
                 screen_coords[2],
@@ -104,4 +109,5 @@ fn main() {
     image
         .write_tga_file("africa_color.tga", true, true)
         .expect("Cannot write file");
+    image.clear();
 }
