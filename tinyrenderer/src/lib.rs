@@ -53,7 +53,7 @@ pub fn line(
     }
 }
 
-fn barycentric(points: &[Vector2Int; 3], point: Vector2Int) -> Vector3F32 {
+fn barycentric_2d(points: &[Vector2Int; 3], point: Vector2Int) -> Vector3F32 {
     let u = Vector3F32::new(
         (points[2].get_x() - points[0].get_x()) as f32,
         (points[1].get_x() - points[0].get_x()) as f32,
