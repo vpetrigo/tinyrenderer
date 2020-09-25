@@ -109,7 +109,7 @@ pub fn triangle_barycentric(
 
     for x in boundary_box_min.get_x()..=boundary_box_max.get_x() {
         for y in boundary_box_min.get_y()..=boundary_box_max.get_y() {
-            let bc_screen = barycentric(&points, Vector2::new(x, y));
+            let bc_screen = barycentric_2d(&points, Vector2::new(x, y));
 
             if bc_screen.get_x() >= 0.0 && bc_screen.get_y() >= 0.0 && bc_screen.get_z() >= 0.0 {
                 image.set(x as u32, y as u32, color);
