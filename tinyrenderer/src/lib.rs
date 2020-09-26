@@ -118,6 +118,51 @@ pub fn triangle_barycentric(
     }
 }
 
+pub fn triangle_barycentric_zbuf(
+    v1: Vector3Int,
+    v2: Vector3Int,
+    v3: Vector3Int,
+    zbuf: &mut [f32],
+    color: &TGAColor,
+    image: &mut TGAImage,
+) {
+    let mut boundary_box_min = Vector2Int::new(i32::max_value(), i32::max_value());
+    let mut boundary_box_max = Vector2Int::new(i32::min_value(), i32::min_value());
+    let clamp = Vector2Int::new(
+        (image.get_width() - 1) as i32,
+        (image.get_height() - 1) as i32,
+    );
+    let points = [v1, v2, v3];
+
+    for p in &points {
+        *boundary_box_min.get_x_as_mut() = 0.max(boundary_box_min.get_x().min(p.get_x()));
+        *boundary_box_min.get_y_as_mut() = 0.max(boundary_box_min.get_y().min(p.get_y()));
+        *boundary_box_max.get_x_as_mut() =
+            clamp.get_x().min(boundary_box_max.get_x().max(p.get_x()));
+        *boundary_box_max.get_y_as_mut() =
+            clamp.get_y().min(boundary_box_max.get_y().max(p.get_y()));
+    }
+
+    let mut z = 0.0;
+
+    for x in boundary_box_min.get_x()..=boundary_box_max.get_x() {
+        for y in boundary_box_min.get_y()..=boundary_box_max.get_y() {
+            let bc_screen = barycentric_3d(&points, Vector3Int::new(x, y, z as i32));
+
+            if bc_screen.get_x() >= 0.0 && bc_screen.get_y() >= 0.0 && bc_screen.get_z() >= 0.0 {
+                z = (points[0].get_z() as f32 * bc_screen.get_x()
+                    + points[1].get_z() as f32 * bc_screen.get_y()
+                    + points[2].get_z() as f32 * bc_screen.get_z()) as f32;
+
+                if zbuf[(x as u32 + y as u32 * image.get_width() as u32) as usize] < z {
+                    zbuf[(x as u32 + y as u32 * image.get_width() as u32) as usize] = z;
+                    image.set(x as u32, y as u32, color);
+                }
+            }
+        }
+    }
+}
+
 fn triangle_vertices_sort(v1: &mut Vector2Int, v2: &mut Vector2Int, v3: &mut Vector2Int) {
     if v1.get_y() > v2.get_y() {
         v1.swap(v2);
