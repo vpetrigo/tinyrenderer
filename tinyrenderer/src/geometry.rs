@@ -1,5 +1,6 @@
 use core::mem;
 use num;
+use num::cast::AsPrimitive;
 use num::NumCast;
 use num_traits::{Float, Num};
 use std::default::Default;
