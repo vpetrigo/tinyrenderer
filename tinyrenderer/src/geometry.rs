@@ -86,8 +86,22 @@ impl<T: Display + Num + Copy + Clone> Display for Vector2<T> {
 pub type Vector2F32 = Vector2<f32>;
 pub type Vector2Int = Vector2<i32>;
 
-#[derive(Default, Copy, Clone)]
-pub struct XYVector3<T: Num + NumCast + Copy + Clone> {
+// pub trait VectorTrait: Copy + Clone + Num + NumCast + ToPrimitive + AsPrimitive<T> + MulAssign {}
+
+// macro_rules! vector_trait_def {
+//     ($t:tt) => {
+//         impl VectorTrait for $t {}
+//     };
+// }
+//
+// vector_trait_def!(i32);
+// vector_trait_def!(f32);
+
+#[derive(Copy, Clone, Default)]
+pub struct Vector3<T>
+where
+    T: Num + NumCast + AsPrimitive<T> + Copy + Clone,
+{
     x: T,
     y: T,
     z: T,
