@@ -2,7 +2,7 @@ use core::mem;
 use num;
 use num::cast::AsPrimitive;
 use num::NumCast;
-use num_traits::{Float, Num};
+use num_traits::{Float, Num, ToPrimitive};
 use std::default::Default;
 use std::fmt::{Display, Formatter, Result};
 use std::ops::{Add, BitXor, Mul, MulAssign, Sub};
