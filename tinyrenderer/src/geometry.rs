@@ -107,38 +107,10 @@ where
     z: T,
 }
 
-#[derive(Default, Copy, Clone)]
-pub struct UVVector3<T: Num + NumCast + Copy + Clone> {
-    vert: T,
-    uv: T,
-    norm: T,
-}
-
-#[derive(Copy, Clone)]
-#[repr(C)]
-pub union Vector3Repr<T: Num + NumCast + Copy + Clone> {
-    uvvector: UVVector3<T>,
-    xyzvector: XYVector3<T>,
-    raw: [T; 3],
-}
-
-pub trait VectorTrait: Num + NumCast + Copy + Clone + MulAssign {}
-
-macro_rules! vector_trait_def {
-    ($t:tt) => {
-        impl VectorTrait for $t {}
-    };
-}
-
-vector_trait_def!(i32);
-vector_trait_def!(f32);
-
-#[derive(Copy, Clone)]
-pub struct Vector3<T: Copy + Clone + VectorTrait> {
-    repr: Vector3Repr<T>,
-}
-
-impl<T: Copy + Clone + VectorTrait> Vector3<T> {
+impl<T> Vector3<T>
+where
+    T: Num + NumCast + AsPrimitive<T> + AsPrimitive<f32> + AsPrimitive<f64> + Copy + Clone,
+{
     pub fn new(x: T, y: T, z: T) -> Self {
         Vector3 {
             repr: Vector3Repr {
