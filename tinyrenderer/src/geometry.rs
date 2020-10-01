@@ -112,11 +112,7 @@ where
     T: Num + NumCast + AsPrimitive<T> + AsPrimitive<f32> + AsPrimitive<f64> + Copy + Clone,
 {
     pub fn new(x: T, y: T, z: T) -> Self {
-        Vector3 {
-            repr: Vector3Repr {
-                xyzvector: XYVector3 { x, y, z },
-            },
-        }
+        Vector3 { x, y, z }
     }
 
     fn get_sum_of_squared(&self) -> T {
