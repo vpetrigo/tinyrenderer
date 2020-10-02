@@ -116,11 +116,7 @@ where
     }
 
     fn get_sum_of_squared(&self) -> T {
-        unsafe {
-            self.repr.xyzvector.x * self.repr.xyzvector.x
-                + self.repr.xyzvector.y * self.repr.xyzvector.y
-                + self.repr.xyzvector.z * self.repr.xyzvector.z
-        }
+        self.x * self.x + self.y * self.y + self.z * self.z
     }
 
     fn get_sum_of_squared_f32(&self) -> f32 {
