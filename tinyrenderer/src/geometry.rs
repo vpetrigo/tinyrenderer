@@ -120,7 +120,7 @@ where
     }
 
     fn get_sum_of_squared_f32(&self) -> f32 {
-        num::cast(self.get_sum_of_squared()).unwrap()
+        self.get_sum_of_squared().as_()
     }
 
     fn get_sum_of_squared_f64(&self) -> f64 {
