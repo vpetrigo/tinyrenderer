@@ -124,7 +124,7 @@ where
     }
 
     fn get_sum_of_squared_f64(&self) -> f64 {
-        num::cast(self.get_sum_of_squared()).unwrap()
+        self.get_sum_of_squared().as_()
     }
 
     pub fn norm_f32(&self) -> f32 {
