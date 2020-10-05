@@ -135,140 +135,186 @@ where
         self.get_sum_of_squared_f64().sqrt()
     }
 
-    pub fn normalize(&mut self, l: f32) {
-        *self *= l as f32 / self.norm_f32();
+    pub fn normalize(&mut self, l: f32)
+    where
+        Vector3<T>: MulAssign<f32>,
+        //     f32: AsPrimitive<T>,
+    {
+        *self *= l / self.norm_f32();
+        // *self *= l / self.norm_f32();
     }
 
-    pub fn normalize_default(&mut self) {
+    pub fn normalize_default(&mut self)
+    where
+        Vector3<T>: MulAssign<f32>,
+    {
         self.normalize(1.0f32)
     }
 
     pub fn get_x(&self) -> T {
-        unsafe { self.repr.xyzvector.x }
+        self.x
     }
 
     pub fn get_y(&self) -> T {
-        unsafe { self.repr.xyzvector.y }
+        self.y
     }
 
     pub fn get_z(&self) -> T {
-        unsafe { self.repr.xyzvector.z }
+        self.z
     }
-}
 
-impl<T: Default + VectorTrait> Default for Vector3<T> {
-    fn default() -> Self {
-        Vector3 {
-            repr: Vector3Repr {
-                xyzvector: XYVector3::default(),
-            },
-        }
+    pub fn get_x_as_mut(&mut self) -> &mut T {
+        &mut self.x
+    }
+
+    pub fn get_y_as_mut(&mut self) -> &mut T {
+        &mut self.y
+    }
+
+    pub fn get_z_as_mut(&mut self) -> &mut T {
+        &mut self.z
     }
 }
 
 /// Dot product
-impl<T: VectorTrait> Mul for Vector3<T> {
+impl<T> Mul for Vector3<T>
+where
+    T: Num
+        + NumCast
+        + ToPrimitive
+        + AsPrimitive<T>
+        + AsPrimitive<f32>
+        + AsPrimitive<f64>
+        + Copy
+        + Clone,
+{
     type Output = T;
 
     fn mul(self, rhs: Self) -> Self::Output {
-        unsafe {
-            self.repr.xyzvector.x * rhs.repr.xyzvector.x
-                + self.repr.xyzvector.y * rhs.repr.xyzvector.y
-                + self.repr.xyzvector.z * rhs.repr.xyzvector.z
-        }
+        self.x * rhs.x + self.y * rhs.y + self.z * rhs.z
     }
 }
 
 impl<T, U> Mul<U> for Vector3<T>
 where
-    T: VectorTrait,
-    U: Float,
+    T: Num
+        + NumCast
+        + ToPrimitive
+        + AsPrimitive<T>
+        + AsPrimitive<U>
+        + AsPrimitive<f32>
+        + AsPrimitive<f64>
+        + Copy
+        + Clone,
+    U: Float + AsPrimitive<T>,
 {
     type Output = Self;
 
     fn mul(self, rhs: U) -> Self::Output {
-        unsafe {
-            Vector3::<T>::new(
-                num::cast::<U, T>(num::cast::<T, U>(self.repr.xyzvector.x).unwrap() * rhs).unwrap(),
-                num::cast::<U, T>(num::cast::<T, U>(self.repr.xyzvector.y).unwrap() * rhs).unwrap(),
-                num::cast::<U, T>(num::cast::<T, U>(self.repr.xyzvector.z).unwrap() * rhs).unwrap(),
-            )
-        }
+        Vector3::<T>::new(
+            (rhs * self.x.as_()).as_(),
+            (rhs * self.y.as_()).as_(),
+            (rhs * self.z.as_()).as_(),
+        )
     }
 }
 
 impl<T, U> MulAssign<U> for Vector3<T>
 where
-    T: VectorTrait,
-    U: Float,
+    T: Num
+        + NumCast
+        + ToPrimitive
+        + AsPrimitive<T>
+        + AsPrimitive<U>
+        + AsPrimitive<f32>
+        + AsPrimitive<f64>
+        + Copy
+        + Clone,
+    U: Float + AsPrimitive<T>,
 {
     fn mul_assign(&mut self, rhs: U) {
-        unsafe {
-            self.repr.xyzvector.x =
-                num::cast::<U, T>(num::cast::<T, U>(self.repr.xyzvector.x).unwrap() * rhs).unwrap();
-            self.repr.xyzvector.y =
-                num::cast::<U, T>(num::cast::<T, U>(self.repr.xyzvector.y).unwrap() * rhs).unwrap();
-            self.repr.xyzvector.z =
-                num::cast::<U, T>(num::cast::<T, U>(self.repr.xyzvector.z).unwrap() * rhs).unwrap();
-        }
+        // self.x = (rhs * self.x.as_()).as_();
+        // self.y = (rhs * self.y.as_()).as_();
+        // self.z = (rhs * self.z.as_()).as_();
+        self.x = (rhs * self.x.as_()).as_();
+        self.y = (rhs * self.y.as_()).as_();
+        self.z = (rhs * self.z.as_()).as_();
     }
 }
 
-impl<T: VectorTrait> Add for Vector3<T> {
+impl<T> Add for Vector3<T>
+where
+    T: Num
+        + NumCast
+        + ToPrimitive
+        + AsPrimitive<T>
+        + AsPrimitive<f32>
+        + AsPrimitive<f64>
+        + Copy
+        + Clone,
+{
     type Output = Self;
 
     fn add(self, rhs: Self) -> Self::Output {
-        unsafe {
-            Vector3::<T>::new(
-                self.repr.xyzvector.x + rhs.repr.xyzvector.x,
-                self.repr.xyzvector.y + rhs.repr.xyzvector.y,
-                self.repr.xyzvector.z + rhs.repr.xyzvector.z,
-            )
-        }
+        Vector3::<T>::new(self.x + rhs.x, self.y + rhs.y, self.z + rhs.z)
     }
 }
 
-impl<T: VectorTrait> Sub for Vector3<T> {
+impl<T> Sub for Vector3<T>
+where
+    T: Num
+        + NumCast
+        + ToPrimitive
+        + AsPrimitive<T>
+        + AsPrimitive<f32>
+        + AsPrimitive<f64>
+        + Copy
+        + Clone,
+{
     type Output = Self;
 
     fn sub(self, rhs: Self) -> Self::Output {
-        unsafe {
-            Vector3::<T>::new(
-                self.repr.xyzvector.x - rhs.repr.xyzvector.x,
-                self.repr.xyzvector.y - rhs.repr.xyzvector.y,
-                self.repr.xyzvector.z - rhs.repr.xyzvector.z,
-            )
-        }
+        Vector3::<T>::new(self.x - rhs.x, self.y - rhs.y, self.z - rhs.z)
     }
 }
 
 /// Cross product
-impl<T: VectorTrait> BitXor for Vector3<T> {
+impl<T> BitXor for Vector3<T>
+where
+    T: Num
+        + NumCast
+        + ToPrimitive
+        + AsPrimitive<T>
+        + AsPrimitive<f32>
+        + AsPrimitive<f64>
+        + Copy
+        + Clone,
+{
     type Output = Self;
 
     fn bitxor(self, rhs: Self) -> Self::Output {
-        unsafe {
-            Vector3::<T>::new(
-                self.repr.xyzvector.y * rhs.repr.xyzvector.z
-                    - self.repr.xyzvector.z * rhs.repr.xyzvector.y,
-                self.repr.xyzvector.z * rhs.repr.xyzvector.x
-                    - self.repr.xyzvector.x * rhs.repr.xyzvector.z,
-                self.repr.xyzvector.x * rhs.repr.xyzvector.y
-                    - self.repr.xyzvector.y * rhs.repr.xyzvector.x,
-            )
-        }
+        Vector3::<T>::new(
+            self.y * rhs.z - self.z * rhs.y,
+            self.z * rhs.x - self.x * rhs.z,
+            self.x * rhs.y - self.y * rhs.x,
+        )
     }
 }
 
-impl<T: Display + VectorTrait> Display for Vector3<T> {
+impl<T> Display for Vector3<T>
+where
+    T: Num
+        + NumCast
+        + ToPrimitive
+        + AsPrimitive<T>
+        + AsPrimitive<f32>
+        + AsPrimitive<f64>
+        + Copy
+        + Clone
+        + Display,
+{
     fn fmt(&self, f: &mut Formatter<'_>) -> Result {
-        unsafe {
-            write!(
-                f,
-                "({}, {}, {})",
-                self.repr.xyzvector.x, self.repr.xyzvector.y, self.repr.xyzvector.z
-            )
-        }
+        write!(f, "({}, {}, {})", self.x, self.y, self.z)
     }
 }
 
