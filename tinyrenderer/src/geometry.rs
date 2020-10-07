@@ -113,7 +113,7 @@ where
 
 impl<T> Vector3<T>
 where
-    T: Num + NumCast + AsPrimitive<T> + AsPrimitive<f32> + AsPrimitive<f64> + Copy + Clone,
+    T: VectorTrait<T> + AsPrimitive<f32> + AsPrimitive<f64>,
 {
     pub fn new(x: T, y: T, z: T) -> Self {
         Vector3 { x, y, z }
