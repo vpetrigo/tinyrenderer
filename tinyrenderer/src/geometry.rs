@@ -142,7 +142,6 @@ where
     pub fn normalize(&mut self, l: f32)
     where
         Vector3<T>: MulAssign<f32>,
-        //     f32: AsPrimitive<T>,
     {
         *self *= l / self.norm_f32();
         // *self *= l / self.norm_f32();
