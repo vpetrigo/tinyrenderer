@@ -144,7 +144,6 @@ where
         Vector3<T>: MulAssign<f32>,
     {
         *self *= l / self.norm_f32();
-        // *self *= l / self.norm_f32();
     }
 
     pub fn normalize_default(&mut self)
