@@ -192,15 +192,7 @@ where
 
 impl<T, U> Mul<U> for Vector3<T>
 where
-    T: Num
-        + NumCast
-        + ToPrimitive
-        + AsPrimitive<T>
-        + AsPrimitive<U>
-        + AsPrimitive<f32>
-        + AsPrimitive<f64>
-        + Copy
-        + Clone,
+    T: VectorTrait<T> + AsPrimitive<U> + AsPrimitive<f32> + AsPrimitive<f64>,
     U: Float + AsPrimitive<T>,
 {
     type Output = Self;
