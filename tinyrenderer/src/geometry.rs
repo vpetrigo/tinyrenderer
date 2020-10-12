@@ -212,9 +212,6 @@ where
     U: Float + AsPrimitive<T>,
 {
     fn mul_assign(&mut self, rhs: U) {
-        // self.x = (rhs * self.x.as_()).as_();
-        // self.y = (rhs * self.y.as_()).as_();
-        // self.z = (rhs * self.z.as_()).as_();
         self.x = (rhs * self.x.as_()).as_();
         self.y = (rhs * self.y.as_()).as_();
         self.z = (rhs * self.z.as_()).as_();
