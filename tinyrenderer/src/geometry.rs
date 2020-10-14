@@ -231,14 +231,7 @@ where
 
 impl<T> Sub for Vector3<T>
 where
-    T: Num
-        + NumCast
-        + ToPrimitive
-        + AsPrimitive<T>
-        + AsPrimitive<f32>
-        + AsPrimitive<f64>
-        + Copy
-        + Clone,
+    T: VectorTrait<T> + AsPrimitive<f32> + AsPrimitive<f64>,
 {
     type Output = Self;
 
