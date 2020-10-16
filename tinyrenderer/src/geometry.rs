@@ -258,15 +258,7 @@ where
 
 impl<T> Display for Vector3<T>
 where
-    T: Num
-        + NumCast
-        + ToPrimitive
-        + AsPrimitive<T>
-        + AsPrimitive<f32>
-        + AsPrimitive<f64>
-        + Copy
-        + Clone
-        + Display,
+    T: VectorTrait<T> + AsPrimitive<f32> + AsPrimitive<f64> + Display,
 {
     fn fmt(&self, f: &mut Formatter<'_>) -> Result {
         write!(f, "({}, {}, {})", self.x, self.y, self.z)
