@@ -29,16 +29,16 @@ impl Model {
                 verts.push(Vector3F32::new(coords[0], coords[1], coords[2]));
             } else if line.starts_with("f ") {
                 let data = line.split(" ").into_iter().skip(1);
-                let mut tmp = vec![];
+                let mut face_coords: [u32; 3] = [0; 3];
+                let mut index = 0;
 
-                for f in data {
-                    let index =
-                        u32::from_str(f.split("/").into_iter().next().unwrap()).unwrap() - 1;
+                data.for_each(|s| {
+                    face_coords[index] = u32::from_str(s.split("/").into_iter().nth(1).unwrap()).unwrap() - 1;
+                    index += 1;
+                });
 
-                    tmp.push(index);
-                }
-
-                faces.push(tmp);
+                assert_eq!(index, 3);
+                faces.push(face_coords.into());
             }
         }
 
