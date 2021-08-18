@@ -101,6 +101,32 @@ macro_rules! impl_vector_trait {
 impl_vector_trait!(i32);
 impl_vector_trait!(f32);
 
+pub(crate) trait NumMinMax {
+    type Output;
+
+    fn max_value() -> Self::Output;
+    fn min_value() -> Self::Output;
+}
+
+macro_rules! impl_num_min_max_trait {
+    ($t:ty) => {
+        impl NumMinMax for $t {
+            type Output = Self;
+
+            fn max_value() -> Self::Output {
+                <$t>::MAX
+            }
+
+            fn min_value() -> Self::Output {
+                <$t>::MIN
+            }
+        }
+    };
+}
+
+impl_num_min_max_trait!(i32);
+impl_num_min_max_trait!(f32);
+
 #[derive(Copy, Clone, Default)]
 pub struct Vector3<T>
 where
