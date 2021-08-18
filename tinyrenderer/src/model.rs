@@ -33,7 +33,8 @@ impl Model {
                 let mut index = 0;
 
                 data.for_each(|s| {
-                    face_coords[index] = u32::from_str(s.split("/").into_iter().nth(1).unwrap()).unwrap() - 1;
+                    face_coords[index] =
+                        u32::from_str(s.split("/").into_iter().nth(1).unwrap()).unwrap() - 1;
                     index += 1;
                 });
 
