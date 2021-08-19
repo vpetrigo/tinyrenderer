@@ -57,4 +57,6 @@ fn plot_head() {
         .write_tga_file("africa_color.tga", true, true)
         .expect("Cannot write file");
     image.clear();
+
+    let _texture_diffuse = TGAImage::read_tga_file("african_head_diffuse.tga").unwrap();
 }
