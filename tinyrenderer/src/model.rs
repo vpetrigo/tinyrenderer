@@ -3,6 +3,7 @@ use std::fs::File;
 use std::io;
 use std::io::{BufRead, BufReader};
 use std::str::FromStr;
+use tgaimage::TGAImage;
 
 pub struct Model {
     verts: Vec<Vector3F32>,
@@ -34,7 +35,7 @@ impl Model {
 
                 data.for_each(|s| {
                     face_coords[index] =
-                        u32::from_str(s.split("/").into_iter().nth(1).unwrap()).unwrap() - 1;
+                        u32::from_str(s.split("/").into_iter().nth(0).unwrap()).unwrap() - 1;
                     index += 1;
                 });
 
@@ -44,6 +45,10 @@ impl Model {
         }
 
         Ok(Model { verts, faces })
+    }
+
+    pub fn load_texture(&mut self, _filename: &str, _image: &mut TGAImage) {
+        unimplemented!()
     }
 
     pub fn n_verts(&self) -> usize {
