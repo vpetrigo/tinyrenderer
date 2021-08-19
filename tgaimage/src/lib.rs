@@ -389,14 +389,15 @@ impl TGAImage {
     }
 
     pub fn read_tga_file(filename: &str) -> std::io::Result<Self> {
-        let mut file = std::fs::File::open(filename)?;
+        let file = std::fs::File::open(filename)?;
+        let mut reader = std::io::BufReader::new(file);
         let mut header: TGAHeader = TGAHeader::default();
         let header_size = size_of::<TGAHeader>();
 
         unsafe {
             let header_slice =
                 slice_from_raw_parts_mut(&mut header as *mut _ as *mut u8, header_size);
-            file.read_exact(&mut *header_slice)?;
+            reader.read_exact(&mut *header_slice)?;
         }
 
         let (height, width, bitsperpixel) = unsafe {
@@ -426,10 +427,10 @@ impl TGAImage {
 
         match TGAImageType::from_u8(datatype) {
             Some(TGAImageType::UncompressedTrueColor) | Some(TGAImageType::UncompressedBW) => {
-                file.read_exact(&mut data)?;
+                reader.read_exact(&mut data)?;
             }
             Some(TGAImageType::RLETrueColor) | Some(TGAImageType::RLEBW) => {
-                TGAImage::load_rle_data(&mut file, &mut data, &(height, width, bitsperpixel))?;
+                TGAImage::load_rle_data(&mut reader, &mut data, &(height, width, bitsperpixel))?;
             }
             _ => {
                 return Err(std::io::Error::new(
