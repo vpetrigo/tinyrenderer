@@ -1,8 +1,9 @@
-use std::io::Write;
+use std::convert::TryFrom;
+use std::io::{Read, Write};
 use std::mem::size_of;
 use std::ops::{Index, IndexMut, Mul};
 use std::ptr;
-use std::ptr::slice_from_raw_parts;
+use std::ptr::{slice_from_raw_parts, slice_from_raw_parts_mut};
 
 /// TGA image header
 #[derive(Default)]
@@ -35,6 +36,32 @@ pub enum ColorChannel {
     A = 3,
 }
 
+#[derive(Debug, Copy, Clone)]
+pub enum TGAImageType {
+    Unknown = 0,
+    UncompressedColor = 1,
+    UncompressedTrueColor = 2,
+    UncompressedBW = 3,
+    RLEColor = 9,
+    RLETrueColor = 10,
+    RLEBW = 11,
+}
+
+impl TGAImageType {
+    fn from_u8(value: u8) -> Option<Self> {
+        match value {
+            0 => Some(TGAImageType::Unknown),
+            1 => Some(TGAImageType::UncompressedColor),
+            2 => Some(TGAImageType::UncompressedTrueColor),
+            3 => Some(TGAImageType::UncompressedBW),
+            9 => Some(TGAImageType::RLEColor),
+            10 => Some(TGAImageType::RLETrueColor),
+            11 => Some(TGAImageType::RLEBW),
+            _ => None,
+        }
+    }
+}
+
 /// TGA image format
 #[derive(Debug, Copy, Clone, PartialEq)]
 pub enum TGAImageFormat {
@@ -42,6 +69,20 @@ pub enum TGAImageFormat {
     Grayscale = 1,
     RGB = 3,
     RGBA = 4,
+}
+
+impl TryFrom<u8> for TGAImageFormat {
+    type Error = &'static str;
+
+    fn try_from(value: u8) -> Result<Self, Self::Error> {
+        match value {
+            0 => Ok(TGAImageFormat::Unknown),
+            1 => Ok(TGAImageFormat::Grayscale),
+            3 => Ok(TGAImageFormat::RGB),
+            4 => Ok(TGAImageFormat::RGBA),
+            _ => Err("Invalid TGA Image format number"),
+        }
+    }
 }
 
 impl Default for TGAImageFormat {
@@ -184,6 +225,19 @@ impl TGAImage {
         }
     }
 
+    pub fn get(&self, x: u32, y: u32) -> TGAColor {
+        if self.data.is_empty() || x >= self.width || y >= self.height {
+            return TGAColor::default();
+        }
+
+        let offset = ((x + y * self.width) * self.bytespp as u32) as usize;
+
+        return TGAColor::new_from_iter(
+            self.data[offset..offset + self.bytespp as usize].iter(),
+            self.bytespp as u8,
+        );
+    }
+
     pub fn flip_vertically(&mut self) {
         if self.data.len() == 0 {
             return;
@@ -200,6 +254,23 @@ impl TGAImage {
 
             unsafe {
                 ptr::swap_nonoverlapping(chunk1, chunk2, bytes_per_line);
+            }
+        }
+    }
+
+    pub fn flip_horizontally(&mut self) {
+        if self.data.len() == 0 {
+            return;
+        }
+
+        let half = self.width / 2;
+
+        for i in 0..half {
+            for j in 0..self.height {
+                let c1 = self.get(i, j);
+                let c2 = self.get(self.width - i - 1, j);
+                self.set(i, j, &c2);
+                self.set(self.width - i - 1, j, &c1);
             }
         }
     }
@@ -264,6 +335,127 @@ impl TGAImage {
         }
 
         Ok(())
+    }
+
+    fn load_rle_data<T: std::io::Read>(
+        input: &mut T,
+        data: &mut Vec<u8>,
+        image_param: &(u16, u16, u8),
+    ) -> std::io::Result<()> {
+        let mut current_pixel = 0usize;
+        let mut current_offset = 0usize;
+        let (height, width, bytespp) = image_param;
+        let pixel_count = *height as usize * *width as usize;
+        let mut header_buf = [0u8; 1];
+
+        while current_pixel < pixel_count {
+            input.read_exact(&mut header_buf)?;
+            let header = u8::from_ne_bytes(header_buf);
+
+            if header & 0b1000_0000 == 0 {
+                // raw packet
+                let packet_size = header + 1;
+                let offset_start = current_offset;
+                let offset_end = current_offset + *bytespp as usize * packet_size as usize;
+
+                input.read_exact(&mut data[offset_start..offset_end])?;
+                current_pixel += packet_size as usize;
+                current_offset += packet_size as usize * *bytespp as usize;
+            } else {
+                // rle packet
+                let packet_size = (header ^ 0b1000_0000) + 1u8;
+                input.read_exact(&mut data[current_offset..current_offset + *bytespp as usize])?;
+                let origin = &data[current_offset..current_offset + *bytespp as usize].as_ptr();
+                current_offset += *bytespp as usize;
+                current_pixel += 1;
+
+                for _ in 0..packet_size - 1 {
+                    unsafe {
+                        std::ptr::copy_nonoverlapping(
+                            origin,
+                            &mut data[current_offset..current_offset + *bytespp as usize].as_ptr(),
+                            *bytespp as usize,
+                        );
+                    }
+
+                    current_offset += *bytespp as usize;
+                    current_pixel += 1;
+                    assert!(current_pixel <= pixel_count);
+                }
+            }
+        }
+
+        Ok(())
+    }
+
+    pub fn read_tga_file(filename: &str) -> std::io::Result<Self> {
+        let mut file = std::fs::File::open(filename)?;
+        let mut header: TGAHeader = TGAHeader::default();
+        let header_size = size_of::<TGAHeader>();
+
+        unsafe {
+            let header_slice =
+                slice_from_raw_parts_mut(&mut header as *mut _ as *mut u8, header_size);
+            file.read_exact(&mut *header_slice)?;
+        }
+
+        let (height, width, bitsperpixel) = unsafe {
+            (
+                ptr::read_unaligned(ptr::addr_of!(header.height)),
+                ptr::read_unaligned(ptr::addr_of!(header.width)),
+                ptr::read_unaligned(ptr::addr_of!(header.bitsperpixel)) >> 3,
+            )
+        };
+
+        let is_valid_bpp = match TGAImageFormat::try_from(bitsperpixel) {
+            Ok(TGAImageFormat::Grayscale) | Ok(TGAImageFormat::RGB) | Ok(TGAImageFormat::RGBA) => {
+                true
+            }
+            _ => false,
+        };
+
+        if height <= 0 || width <= 0 || !is_valid_bpp {
+            return Err(std::io::Error::new(
+                std::io::ErrorKind::InvalidData,
+                "Invalid TGA header",
+            ));
+        }
+
+        let mut data = vec![0u8; height as usize * width as usize * bitsperpixel as usize];
+        let datatype = unsafe { ptr::read_unaligned(ptr::addr_of!(header.datatypecode)) };
+
+        match TGAImageType::from_u8(datatype) {
+            Some(TGAImageType::UncompressedTrueColor) | Some(TGAImageType::UncompressedBW) => {
+                file.read_exact(&mut data)?;
+            }
+            Some(TGAImageType::RLETrueColor) | Some(TGAImageType::RLEBW) => {
+                TGAImage::load_rle_data(&mut file, &mut data, &(height, width, bitsperpixel))?;
+            }
+            _ => {
+                return Err(std::io::Error::new(
+                    std::io::ErrorKind::InvalidData,
+                    format!("Unknown file format {}", datatype),
+                ))
+            }
+        };
+
+        let mut image = TGAImage::new(
+            width as u32,
+            height as u32,
+            TGAImageFormat::try_from(bitsperpixel).unwrap(),
+        );
+        let image_descriptor =
+            unsafe { ptr::read_unaligned(ptr::addr_of!(header.imagedescriptor)) };
+
+        if image_descriptor & 0b10_0000 != 0 {
+            image.flip_vertically();
+        }
+
+        if image_descriptor & 0b1_0000 != 0 {
+            image.flip_horizontally();
+        }
+
+        Ok(image)
     }
 
     pub fn write_tga_file(&self, filename: &str, vflip: bool, rle: bool) -> std::io::Result<()> {
