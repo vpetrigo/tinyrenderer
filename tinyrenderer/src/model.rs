@@ -10,16 +10,16 @@ use tgaimage::TGAImage;
 #[derive(Default)]
 struct ModelFace {
     verts_index: [u32; 3],
-    uv: [u32; 3],
-    norm: [u32; 3],
+    uv_index: [u32; 3],
+    norm_index: [u32; 3],
 }
 
 impl ModelFace {
     fn new(verts_index: [u32; 3]) -> Self {
         ModelFace {
             verts_index,
-            uv: [0; 3],
-            norm: [0; 3],
+            uv_index: [0; 3],
+            norm_index: [0; 3],
         }
     }
 }
@@ -76,8 +76,8 @@ impl Model {
                 .into_iter();
 
             model_face.verts_index[i] = it.next().unwrap();
-            model_face.uv[i] = it.next().unwrap();
-            model_face.norm[i] = it.next().unwrap();
+            model_face.uv_index[i] = it.next().unwrap();
+            model_face.norm_index[i] = it.next().unwrap();
             assert!(i < 3);
         });
 
