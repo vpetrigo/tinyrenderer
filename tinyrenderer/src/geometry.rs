@@ -145,6 +145,14 @@ where
         Vector3 { x, y, z }
     }
 
+    pub fn new_from_array(coords: &[T; 3]) -> Self {
+        Vector3 {
+            x: coords[0],
+            y: coords[1],
+            z: coords[2],
+        }
+    }
+
     fn get_sum_of_squared(&self) -> T {
         self.x * self.x + self.y * self.y + self.z * self.z
     }
