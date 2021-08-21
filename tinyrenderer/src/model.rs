@@ -135,6 +135,14 @@ impl Model {
         self.faces.len()
     }
 
+    pub fn n_textures(&self) -> usize {
+        self.uvs.len()
+    }
+
+    pub fn n_normals(&self) -> usize {
+        self.normals.len()
+    }
+
     pub fn vert(&self, index: usize) -> &Vector3F32 {
         &self.verts[index]
     }
