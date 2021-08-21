@@ -15,7 +15,13 @@ fn plot_head() {
     let light_dir = Vector3F32::new(0., 0., -1.);
     let mut z_buffer = [f32::NEG_INFINITY; 800 * 800];
 
-    println!("v #{} f #{}", model.n_verts(), model.n_faces());
+    println!(
+        "v #{} f #{}, vt# {}, vn# {}",
+        model.n_verts(),
+        model.n_faces(),
+        model.n_textures(),
+        model.n_normals()
+    );
     // plot head with light and z-buffer
     for i in 0..model.n_faces() {
         let face = model.face(i);
