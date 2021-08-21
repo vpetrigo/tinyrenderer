@@ -325,3 +325,12 @@ mod test_vector3 {
         assert!((expected.get_z() - v.get_z()).abs() < 0.05);
     }
 }
+
+#[derive(Debug, Copy, Clone)]
+pub struct UVMap<T: Num + Copy + Clone> {
+    pub u: T,
+    pub v: T,
+    pub w: T
+}
+
+pub type UVMapF32 = UVMap<f32>;
