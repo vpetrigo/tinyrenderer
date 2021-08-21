@@ -10,11 +10,14 @@ fn main() {
 fn plot_head() {
     let width = 800u32;
     let height = 800u32;
-    let model = Model::new("african_head.obj").unwrap();
+    let mut model = Model::new("african_head.obj").unwrap();
     let mut image = TGAImage::new(width, height, TGAImageFormat::RGB);
     let light_dir = Vector3F32::new(0., 0., -1.);
     let mut z_buffer = [f32::NEG_INFINITY; 800 * 800];
 
+    model
+        .load_texture("african_head_diffuse.tga")
+        .expect("Cannot load model texture");
     println!(
         "v #{} f #{}, vt# {}, vn# {}",
         model.n_verts(),
