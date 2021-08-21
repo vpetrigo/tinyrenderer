@@ -123,8 +123,16 @@ impl Model {
         })
     }
 
-    pub fn load_texture(&mut self, _filename: &str) -> Result<TGAImage, String> {
-        unimplemented!()
+    pub fn load_texture(&mut self, filename: &str) -> io::Result<()> {
+        if self.diffusemap.is_some() {
+            return Err(io::Error::from(io::ErrorKind::AlreadyExists));
+        }
+
+        let texture = TGAImage::read_tga_file(filename)?;
+        self.diffusemap = Some(texture);
+        self.diffusemap.as_mut().unwrap().flip_vertically();
+
+        Ok(())
     }
 
     pub fn n_verts(&self) -> usize {
