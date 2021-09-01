@@ -1,11 +1,12 @@
 use core::mem;
+use std::default::Default;
+use std::fmt::{Display, Formatter, Result};
+use std::ops::{Add, BitXor, Mul, MulAssign, Sub};
+
 use num;
 use num::cast::AsPrimitive;
 use num::NumCast;
 use num_traits::{Float, Num, ToPrimitive};
-use std::default::Default;
-use std::fmt::{Display, Formatter, Result};
-use std::ops::{Add, BitXor, Mul, MulAssign, Sub};
 
 #[derive(Debug, Copy, Clone)]
 pub struct Vector2<T: Num + Copy + Clone> {
@@ -25,22 +26,6 @@ impl<T: Num + Copy + Clone> Vector2<T> {
 
     pub fn swap_xy(&mut self) {
         mem::swap(&mut self.x, &mut self.y);
-    }
-
-    pub fn get_x(&self) -> T {
-        self.x
-    }
-
-    pub fn get_y(&self) -> T {
-        self.y
-    }
-
-    pub fn get_x_as_mut(&mut self) -> &mut T {
-        &mut self.x
-    }
-
-    pub fn get_y_as_mut(&mut self) -> &mut T {
-        &mut self.y
     }
 }
 
@@ -100,6 +85,56 @@ macro_rules! impl_vector_trait {
 
 impl_vector_trait!(i32);
 impl_vector_trait!(f32);
+
+pub trait XAxis<T> {
+    fn get_x(&self) -> T;
+
+    fn x_as_mut_ref(&mut self) -> &mut T;
+}
+
+pub trait YAxis<T> {
+    fn get_y(&self) -> T;
+
+    fn y_as_mut_ref(&mut self) -> &mut T;
+}
+
+pub trait ZAxis<T> {
+    fn get_z(&self) -> T;
+
+    fn z_as_mut_ref(&mut self) -> &mut T;
+}
+
+pub trait XYAxis<T>: XAxis<T> + YAxis<T> {}
+
+pub trait XYZAxis<T>: XAxis<T> + YAxis<T> + ZAxis<T> {}
+
+impl<T> XAxis<T> for Vector2<T>
+where
+    T: VectorTrait<T>,
+{
+    fn get_x(&self) -> T {
+        self.x
+    }
+
+    fn x_as_mut_ref(&mut self) -> &mut T {
+        &mut self.x
+    }
+}
+
+impl<T> YAxis<T> for Vector2<T>
+where
+    T: VectorTrait<T>,
+{
+    fn get_y(&self) -> T {
+        self.y
+    }
+
+    fn y_as_mut_ref(&mut self) -> &mut T {
+        &mut self.y
+    }
+}
+
+impl<T> XYAxis<T> for Vector2<T> where T: VectorTrait<T> {}
 
 pub(crate) trait NumMinMax {
     type Output;
@@ -185,30 +220,6 @@ where
         Vector3<T>: MulAssign<f32>,
     {
         self.normalize(1.0f32)
-    }
-
-    pub fn get_x(&self) -> T {
-        self.x
-    }
-
-    pub fn get_y(&self) -> T {
-        self.y
-    }
-
-    pub fn get_z(&self) -> T {
-        self.z
-    }
-
-    pub fn get_x_as_mut(&mut self) -> &mut T {
-        &mut self.x
-    }
-
-    pub fn get_y_as_mut(&mut self) -> &mut T {
-        &mut self.y
-    }
-
-    pub fn get_z_as_mut(&mut self) -> &mut T {
-        &mut self.z
     }
 }
 
@@ -302,6 +313,57 @@ where
 pub type Vector3F32 = Vector3<f32>;
 pub type Vector3Int = Vector3<i32>;
 
+impl<T> XAxis<T> for Vector3<T>
+where
+    T: VectorTrait<T>,
+{
+    fn get_x(&self) -> T {
+        self.x
+    }
+
+    fn x_as_mut_ref(&mut self) -> &mut T {
+        &mut self.x
+    }
+}
+
+impl<T> YAxis<T> for Vector3<T>
+where
+    T: VectorTrait<T>,
+{
+    fn get_y(&self) -> T {
+        self.y
+    }
+
+    fn y_as_mut_ref(&mut self) -> &mut T {
+        &mut self.y
+    }
+}
+
+impl<T> ZAxis<T> for Vector3<T>
+where
+    T: VectorTrait<T>,
+{
+    fn get_z(&self) -> T {
+        self.z
+    }
+
+    fn z_as_mut_ref(&mut self) -> &mut T {
+        &mut self.z
+    }
+}
+
+impl<T> XYAxis<T> for Vector3<T> where T: VectorTrait<T> {}
+impl<T> XYZAxis<T> for Vector3<T> where T: VectorTrait<T> {}
+
+#[derive(Debug, Copy, Clone)]
+pub struct UVMap<T: Num + Copy + Clone> {
+    pub u: T,
+    pub v: T,
+    pub w: T,
+}
+
+pub type UVMapF32 = UVMap<f32>;
+
 #[cfg(test)]
 mod test_vector3 {
     use crate::geometry::Vector3F32;
@@ -325,12 +387,3 @@ mod test_vector3 {
         assert!((expected.get_z() - v.get_z()).abs() < 0.05);
     }
 }
-
-#[derive(Debug, Copy, Clone)]
-pub struct UVMap<T: Num + Copy + Clone> {
-    pub u: T,
-    pub v: T,
-    pub w: T
-}
-
-pub type UVMapF32 = UVMap<f32>;
