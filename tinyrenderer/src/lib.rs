@@ -1,14 +1,28 @@
+use std::ops::Neg;
+
+use num::{One, Signed, Zero};
+
 use tgaimage::{TGAColor, TGAImage};
 
-use crate::geometry::{NumMinMax, Vector2, Vector2Int, Vector3F32, Vector3Int, VectorTrait};
+use crate::geometry::{
+    NumMinMax, UVMapF32, Vector2, Vector2Int, Vector3Int, VectorTrait, XAxis, XYAxis, YAxis, ZAxis,
+};
 use crate::line::Line;
 use crate::point::Point;
-use num::{One, Zero};
 
 pub mod geometry;
 pub mod line;
 pub mod model;
 pub mod point;
+
+pub struct TriangleDef(Vector3Int, Vector3Int, Vector3Int);
+pub struct TextureDef(UVMapF32, UVMapF32, UVMapF32);
+
+pub struct PointBarycentricCoords {
+    pub u: f32,
+    pub v: f32,
+    pub w: f32,
+}
 
 pub fn line(
     mut x0: i32,
@@ -54,48 +68,43 @@ pub fn line(
     }
 }
 
-fn barycentric_2d(points: &[Vector2Int; 3], point: Vector2Int) -> Vector3F32 {
-    let u = Vector3F32::new(
-        (points[2].get_x() - points[0].get_x()) as f32,
-        (points[1].get_x() - points[0].get_x()) as f32,
-        (points[0].get_x() - point.get_x()) as f32,
-    ) ^ Vector3F32::new(
-        (points[2].get_y() - points[0].get_y()) as f32,
-        (points[1].get_y() - points[0].get_y()) as f32,
-        (points[0].get_y() - point.get_y()) as f32,
-    );
+pub fn barycentric<T: VectorTrait<T> + Signed + Neg, U: XYAxis<T>, V: XYAxis<T>>(
+    triangle_points: &[U; 3],
+    point: V,
+) -> Option<PointBarycentricCoords> {
+    // calculate PA, AB and AC vector parameters in the A (point) basis
+    let point_vec_x = point.get_x() - triangle_points[0].get_x();
+    let point_vec_y = point.get_y() - triangle_points[0].get_y();
+    let side_one_x = triangle_points[1].get_x() - triangle_points[0].get_x();
+    let side_one_y = triangle_points[1].get_y() - triangle_points[0].get_y();
+    let side_two_x = triangle_points[2].get_x() - triangle_points[0].get_x();
+    let side_two_y = triangle_points[2].get_y() - triangle_points[0].get_y();
+    let det = side_one_x * side_two_y - side_one_y * side_two_x;
 
-    if u.get_z().abs() < 1.0 {
-        return Vector3F32::new(-1.0, 1.0, 1.0);
+    if det == T::zero() {
+        return None;
     }
-
-    Vector3F32::new(
-        1.0 - (u.get_x() + u.get_y()) / u.get_z(),
-        u.get_y() / u.get_z(),
-        u.get_x() / u.get_z(),
-    )
-}
-
-fn barycentric_3d(points: &[Vector3Int; 3], point: Vector3Int) -> Vector3F32 {
-    let u = Vector3F32::new(
-        (points[2].get_x() - points[0].get_x()) as f32,
-        (points[1].get_x() - points[0].get_x()) as f32,
-        (points[0].get_x() - point.get_x()) as f32,
-    ) ^ Vector3F32::new(
-        (points[2].get_y() - points[0].get_y()) as f32,
-        (points[1].get_y() - points[0].get_y()) as f32,
-        (points[0].get_y() - point.get_y()) as f32,
+    // originally we have the following matrix:
+    // | s1.x  s2.x |
+    // | s1.y  s2.y |
+    // and we need the adjugate:
+    // |  s2.y  -s2.x |
+    // | -s1.y   s1.x |
+    let adj_coeffs = ((side_two_y, -side_two_x), (-side_one_y, side_one_x));
+    let result = (
+        adj_coeffs.0 .0 * point_vec_x + adj_coeffs.0 .1 * point_vec_y,
+        adj_coeffs.1 .0 * point_vec_x + adj_coeffs.1 .1 * point_vec_y,
     );
+    let det = det.to_f32().unwrap();
+    let u = result.0.to_f32().unwrap() / det;
+    let v = result.1.to_f32().unwrap() / det;
+    let w = 1.0 - u - v;
 
-    if u.get_z().abs() < 1.0 {
-        return Vector3F32::new(-1.0, 1.0, 1.0);
+    if u >= 0.0 && v >= 0.0 && u + v <= 1.0 {
+        Some(PointBarycentricCoords { u, v, w })
+    } else {
+        None
     }
-
-    Vector3F32::new(
-        1.0 - (u.get_x() + u.get_y()) / u.get_z(),
-        u.get_y() / u.get_z(),
-        u.get_x() / u.get_z(),
-    )
 }
 
 fn boundary_box_setup<T>(points: &[Vector2<T>; 3], width: T, height: T) -> (Vector2<T>, Vector2<T>)
@@ -107,14 +116,14 @@ where
     let clamp = Vector2::<T>::new((width - T::one()).as_(), (height - T::one()).as_());
 
     for point in points {
-        *boundary_box_min.get_x_as_mut() =
+        *boundary_box_min.x_as_mut_ref() =
             T::zero().max(boundary_box_min.get_x().min(point.get_x()));
-        *boundary_box_min.get_y_as_mut() =
+        *boundary_box_min.y_as_mut_ref() =
             T::zero().max(boundary_box_min.get_y().min(point.get_y()));
-        *boundary_box_max.get_x_as_mut() = clamp
+        *boundary_box_max.x_as_mut_ref() = clamp
             .get_x()
             .min(boundary_box_max.get_x().max(point.get_x()));
-        *boundary_box_max.get_y_as_mut() = clamp
+        *boundary_box_max.y_as_mut_ref() = clamp
             .get_y()
             .min(boundary_box_max.get_y().max(point.get_y()));
     }
@@ -143,9 +152,7 @@ pub fn triangle_barycentric(
 
     for x in boundary_box_min.get_x()..=boundary_box_max.get_x() {
         for y in boundary_box_min.get_y()..=boundary_box_max.get_y() {
-            let bc_screen = barycentric_2d(points, Vector2::new(x, y));
-
-            if bc_screen.get_x() >= 0.0 && bc_screen.get_y() >= 0.0 && bc_screen.get_z() >= 0.0 {
+            if let Some(_) = barycentric(points, Vector2::new(x, y)) {
                 image.set(x as u32, y as u32, color);
             }
         }
@@ -175,12 +182,10 @@ pub fn triangle_barycentric_zbuf(
 
     for x in boundary_box_min.get_x()..=boundary_box_max.get_x() {
         for y in boundary_box_min.get_y()..=boundary_box_max.get_y() {
-            let bc_screen = barycentric_3d(&[v1, v2, v3], Vector3Int::new(x, y, z as i32));
-
-            if bc_screen.get_x() >= 0.0 && bc_screen.get_y() >= 0.0 && bc_screen.get_z() >= 0.0 {
-                z = (points[0].get_z() as f32 * bc_screen.get_x()
-                    + points[1].get_z() as f32 * bc_screen.get_y()
-                    + points[2].get_z() as f32 * bc_screen.get_z()) as f32;
+            if let Some(bc_screen) = barycentric(&[v1, v2, v3], Vector3Int::new(x, y, z as i32)) {
+                z = (points[0].get_z() as f32 * bc_screen.w
+                    + points[1].get_z() as f32 * bc_screen.u
+                    + points[2].get_z() as f32 * bc_screen.v) as f32;
 
                 if zbuf[(x as u32 + y as u32 * image.get_width() as u32) as usize] < z {
                     zbuf[(x as u32 + y as u32 * image.get_width() as u32) as usize] = z;
@@ -189,6 +194,44 @@ pub fn triangle_barycentric_zbuf(
             }
         }
     }
+}
+
+pub fn triangle_barycentric_zbuf_with_texture(
+    triangle_def: TriangleDef,
+    _texture_def: TextureDef,
+    _zbuf: &mut [f32],
+    _image: &mut TGAImage,
+    _intensity: f32,
+) {
+    let _points_2d = &[
+        Vector2::new(triangle_def.0.get_x(), triangle_def.0.get_y()),
+        Vector2::new(triangle_def.1.get_x(), triangle_def.1.get_y()),
+        Vector2::new(triangle_def.2.get_x(), triangle_def.2.get_y()),
+    ];
+    // let points = [v1, v2, v3];
+    // let (boundary_box_min, boundary_box_max) = boundary_box_setup(
+    //     points_2d,
+    //     image.get_width() as i32,
+    //     image.get_height() as i32,
+    // );
+    // let mut z = 0.0;
+    //
+    // for x in boundary_box_min.get_x()..=boundary_box_max.get_x() {
+    //     for y in boundary_box_min.get_y()..=boundary_box_max.get_y() {
+    //         let bc_screen = barycentric_3d(&[v1, v2, v3], Vector3Int::new(x, y, z as i32));
+    //
+    //         if bc_screen.get_x() >= 0.0 && bc_screen.get_y() >= 0.0 && bc_screen.get_z() >= 0.0 {
+    //             z = (points[0].get_z() as f32 * bc_screen.get_x()
+    //                 + points[1].get_z() as f32 * bc_screen.get_y()
+    //                 + points[2].get_z() as f32 * bc_screen.get_z()) as f32;
+    //
+    //             if zbuf[(x as u32 + y as u32 * image.get_width() as u32) as usize] < z {
+    //                 zbuf[(x as u32 + y as u32 * image.get_width() as u32) as usize] = z;
+    //                 image.set(x as u32, y as u32, color);
+    //             }
+    //         }
+    //     }
+    // }
 }
 
 fn triangle_vertices_sort(v1: &mut Vector2Int, v2: &mut Vector2Int, v3: &mut Vector2Int) {
