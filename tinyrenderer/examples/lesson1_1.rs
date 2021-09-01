@@ -1,6 +1,7 @@
 /// Wireframe rendering
 use tgaimage::{TGAColor, TGAImage, TGAImageFormat};
 use tinyrenderer::{line, model::Model};
+use tinyrenderer::geometry::{XAxis, YAxis};
 
 const WHITE: TGAColor = TGAColor::new_rgba(255, 255, 255, 255);
 

@@ -1,7 +1,7 @@
 use rand::random;
 
 use tgaimage::{TGAColor, TGAImage, TGAImageFormat};
-use tinyrenderer::geometry::{Vector2Int, Vector3F32};
+use tinyrenderer::geometry::{Vector2Int, Vector3F32, XAxis, YAxis};
 use tinyrenderer::model::Model;
 use tinyrenderer::{triangle, triangle_barycentric};
 
@@ -56,8 +56,8 @@ fn plot_head() {
 
         for j in 0..3 {
             let v0 = model.vert(face[j] as usize);
-            *screen_coords[j].get_x_as_mut() = ((v0.get_x() + 1.0) * width as f32 / 2.0) as i32;
-            *screen_coords[j].get_y_as_mut() = ((v0.get_y() + 1.0) * height as f32 / 2.0) as i32;
+            *screen_coords[j].x_as_mut_ref() = ((v0.get_x() + 1.0) * width as f32 / 2.0) as i32;
+            *screen_coords[j].y_as_mut_ref() = ((v0.get_y() + 1.0) * height as f32 / 2.0) as i32;
         }
 
         triangle_barycentric(
@@ -81,8 +81,8 @@ fn plot_head() {
 
         for j in 0..3 {
             let v0 = model.vert(face[j] as usize);
-            *screen_coords[j].get_x_as_mut() = ((v0.get_x() + 1.0) * width as f32 / 2.0) as i32;
-            *screen_coords[j].get_y_as_mut() = ((v0.get_y() + 1.0) * height as f32 / 2.0) as i32;
+            *screen_coords[j].x_as_mut_ref() = ((v0.get_x() + 1.0) * width as f32 / 2.0) as i32;
+            *screen_coords[j].y_as_mut_ref() = ((v0.get_y() + 1.0) * height as f32 / 2.0) as i32;
             world_coords[j] = *v0;
         }
 
