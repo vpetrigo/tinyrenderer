@@ -7,7 +7,7 @@ use std::{
 
 use tgaimage::{TGAColor, TGAImage};
 
-use crate::geometry::{UVMapF32, Vector2Int, Vector3F32};
+use crate::geometry::{UVMapF32, Vector2Int, Vector3F32, XAxis, YAxis};
 
 #[derive(Default)]
 struct ModelFace {
@@ -180,8 +180,8 @@ impl Model {
         }
     }
 
-    pub fn uv(&self, face_index: u32, vert_index: u32) -> Vector2Int {
-        let index = self.faces[face_index as usize].uv_index[vert_index as usize] as usize;
+    pub fn uv(&self, face_index: usize, vert_index: usize) -> Vector2Int {
+        let index = self.faces[face_index].uv_index[vert_index] as usize;
 
         Vector2Int::new(
             (self.uvs[index].u * self.diffusemap.as_ref().unwrap().get_width() as f32) as i32,
