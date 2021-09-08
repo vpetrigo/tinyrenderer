@@ -162,7 +162,7 @@ macro_rules! impl_num_min_max_trait {
 impl_num_min_max_trait!(i32);
 impl_num_min_max_trait!(f32);
 
-#[derive(Copy, Clone, Default)]
+#[derive(Copy, Clone, Default, Debug)]
 pub struct Vector3<T>
 where
     T: VectorTrait<T>,
@@ -366,7 +366,7 @@ pub type UVMapF32 = UVMap<f32>;
 
 #[cfg(test)]
 mod test_vector3 {
-    use crate::geometry::Vector3F32;
+    use crate::geometry::{Vector3F32, XAxis, YAxis, ZAxis};
 
     #[test]
     fn test_normalization() {
