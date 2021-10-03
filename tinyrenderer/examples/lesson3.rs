@@ -1,4 +1,4 @@
-use tgaimage::{TGAImage, TGAImageFormat};
+use tgaimage::{TGAColor, TGAImage, TGAImageFormat};
 use tinyrenderer::geometry::{Vector3F32, Vector3Int, XAxis, YAxis, ZAxis};
 use tinyrenderer::model::Model;
 use tinyrenderer::{
@@ -12,6 +12,7 @@ fn main() {
 fn plot_head() {
     let width = 800u32;
     let height = 800u32;
+    let depth = 255u32;
     let mut model = Model::new("african_head.obj").unwrap();
     let mut image = TGAImage::new(width, height, TGAImageFormat::RGB);
     let light_dir = Vector3F32::new(0., 0., -1.);
@@ -37,7 +38,7 @@ fn plot_head() {
             let v0 = model.vert(face[j] as usize);
             *screen_coords[j].x_as_mut_ref() = ((v0.get_x() + 1.0) * width as f32 / 2.0) as i32;
             *screen_coords[j].y_as_mut_ref() = ((v0.get_y() + 1.0) * height as f32 / 2.0) as i32;
-            *screen_coords[j].z_as_mut_ref() = ((v0.get_z() + 1.0) * 255.0 / 2.0) as i32;
+            *screen_coords[j].z_as_mut_ref() = ((v0.get_z() + 1.0) * depth as f32 / 2.0) as i32;
             world_coords[j] = *v0;
         }
 
