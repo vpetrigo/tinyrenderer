@@ -355,35 +355,60 @@ impl TGAImage {
             if header & 0b1000_0000 == 0 {
                 // raw packet
                 let packet_size = header + 1;
-                let offset_start = current_offset;
-                let offset_end = current_offset + *bytespp as usize * packet_size as usize;
+                for i in 0..packet_size {
+                    let offset_start = current_offset + i as usize * *bytespp as usize;
+                    // println!("offset: {}", offset_start);
+                    let mut buf = [0u8; 3];
+                    input.read_exact(&mut buf).expect("Unable to fill RAW buffer");;
+                    // input.read_exact(&mut data[offset_start..offset_start + *bytespp as usize])?;
+                    // println!("{:#?}", &data[offset_start..offset_start + *bytespp as usize]);
+                    // data[offset_start..offset_start + *bytespp as usize]
+                    //     .copy_from_slice(buf.as_slice());
+                    for j in 0..*bytespp as usize {
+                        data[current_offset] = buf[j];
+                        current_offset += 1;
+                    }
 
-                input.read_exact(&mut data[offset_start..offset_end])?;
-                current_pixel += packet_size as usize;
-                current_offset += packet_size as usize * *bytespp as usize;
+                    current_pixel += 1;
+                    // current_offset += *bytespp as usize;
+                }
+                // let offset_start = current_offset;
+                // let offset_end = current_offset + *bytespp as usize * packet_size as usize;
+                //
+                // input.read_exact(&mut data[offset_start..offset_end])?;
+                // current_pixel += packet_size as usize;
+                // current_offset += packet_size as usize * *bytespp as usize;
             } else {
                 // rle packet
                 let packet_size = (header ^ 0b1000_0000) + 1u8;
-                input.read_exact(&mut data[current_offset..current_offset + *bytespp as usize])?;
-                let origin = &data[current_offset..current_offset + *bytespp as usize].as_ptr();
-                current_offset += *bytespp as usize;
-                current_pixel += 1;
+                let mut buf = [0u8; 3];
+                // input.read_exact(&mut data[current_offset..current_offset + *bytespp as usize])?;
+                input.read_exact(&mut buf).expect("Unable to fill RLE buffer");
+                // let origin = &data[current_offset..current_offset + *bytespp as usize].as_ptr();
+                // current_offset += *bytespp as usize;
+                // current_pixel += 1;
 
-                for _ in 0..packet_size - 1 {
-                    unsafe {
-                        std::ptr::copy_nonoverlapping(
-                            origin,
-                            &mut data[current_offset..current_offset + *bytespp as usize].as_ptr(),
-                            *bytespp as usize,
-                        );
+                for _ in 0..packet_size {
+                    for j in 0..*bytespp as usize {
+                        data[current_offset] = buf[j];
+                        current_offset += 1;
                     }
+                    // unsafe {
+                    //     std::ptr::copy_nonoverlapping(
+                    //         origin,
+                    //         &mut data[current_offset..current_offset + *bytespp as usize].as_ptr(),
+                    //         *bytespp as usize,
+                    //     );
+                    // }
 
-                    current_offset += *bytespp as usize;
+                    // current_offset += *bytespp as usize;
                     current_pixel += 1;
                     assert!(current_pixel <= pixel_count);
                 }
             }
         }
+
+        assert_eq!(current_pixel, pixel_count);
 
         Ok(())
     }
