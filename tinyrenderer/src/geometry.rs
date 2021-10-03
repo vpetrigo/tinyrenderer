@@ -8,13 +8,27 @@ use num::cast::AsPrimitive;
 use num::NumCast;
 use num_traits::{Float, Num, ToPrimitive};
 
+pub trait VectorTrait<T>: Copy + Clone + Num + NumCast + ToPrimitive + AsPrimitive<T>
+where
+    T: Copy + 'static,
+{
+}
+
+macro_rules! impl_vector_trait {
+    ($($t:ty),+) => {
+        $( impl VectorTrait<$t> for $t {} )*
+    };
+}
+
+impl_vector_trait!(i32, f32);
+
 #[derive(Debug, Copy, Clone)]
-pub struct Vector2<T: Num + Copy + Clone> {
+pub struct Vector2<T: VectorTrait<T>> {
     x: T,
     y: T,
 }
 
-impl<T: Num + Copy + Clone> Vector2<T> {
+impl<T: VectorTrait<T>> Vector2<T> {
     pub fn new(x: T, y: T) -> Self {
         Vector2 { x, y }
     }
@@ -29,7 +43,7 @@ impl<T: Num + Copy + Clone> Vector2<T> {
     }
 }
 
-impl<T: Num + Default + Copy + Clone> Default for Vector2<T> {
+impl<T: VectorTrait<T> + Default> Default for Vector2<T> {
     fn default() -> Self {
         Vector2 {
             x: T::default(),
@@ -38,15 +52,29 @@ impl<T: Num + Default + Copy + Clone> Default for Vector2<T> {
     }
 }
 
-impl<T: Num + Copy + Clone> Mul for Vector2<T> {
+impl<T: VectorTrait<T>> Mul for Vector2<T> {
     type Output = Self;
 
     fn mul(self, rhs: Self) -> Self::Output {
-        Vector2::<T>::new(self.x * rhs.x, self.y * rhs.y)
+        Self::new(self.x * rhs.x, self.y * rhs.y)
     }
 }
 
-impl<T: Num + Copy + Clone> Add for Vector2<T> {
+impl<T: VectorTrait<T>> Mul<f32> for Vector2<T>
+where
+    f32: AsPrimitive<T>,
+{
+    type Output = Self;
+
+    fn mul(self, rhs: f32) -> Self::Output {
+        Self::new(
+            (self.x.to_f32().unwrap() * rhs).as_(),
+            (self.y.to_f32().unwrap() * rhs).as_(),
+        )
+    }
+}
+
+impl<T: VectorTrait<T>> Add for Vector2<T> {
     type Output = Self;
 
     fn add(self, rhs: Self) -> Self::Output {
@@ -54,7 +82,7 @@ impl<T: Num + Copy + Clone> Add for Vector2<T> {
     }
 }
 
-impl<T: Num + Copy + Clone> Sub for Vector2<T> {
+impl<T: VectorTrait<T>> Sub for Vector2<T> {
     type Output = Self;
 
     fn sub(self, rhs: Self) -> Self::Output {
@@ -62,7 +90,7 @@ impl<T: Num + Copy + Clone> Sub for Vector2<T> {
     }
 }
 
-impl<T: Display + Num + Copy + Clone> Display for Vector2<T> {
+impl<T: Display + VectorTrait<T>> Display for Vector2<T> {
     fn fmt(&self, f: &mut Formatter<'_>) -> Result {
         write!(f, "({}, {})", self.x, self.y)
     }
@@ -70,21 +98,6 @@ impl<T: Display + Num + Copy + Clone> Display for Vector2<T> {
 
 pub type Vector2F32 = Vector2<f32>;
 pub type Vector2Int = Vector2<i32>;
-
-pub trait VectorTrait<T>: Copy + Clone + Num + NumCast + ToPrimitive + AsPrimitive<T>
-where
-    T: Copy + 'static,
-{
-}
-
-macro_rules! impl_vector_trait {
-    ($t:ty) => {
-        impl VectorTrait<$t> for $t {}
-    };
-}
-
-impl_vector_trait!(i32);
-impl_vector_trait!(f32);
 
 pub trait XAxis<T> {
     fn get_x(&self) -> T;
