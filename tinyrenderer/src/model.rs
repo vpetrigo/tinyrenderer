@@ -128,8 +128,7 @@ impl Model {
             return Err(io::Error::from(io::ErrorKind::AlreadyExists));
         }
 
-        let texture = TGAImage::read_tga_file(filename)?;
-        self.diffusemap = Some(texture);
+        self.diffusemap = Some(TGAImage::read_tga_file(filename).expect("Unable to read file"));
         self.diffusemap.as_mut().unwrap().flip_vertically();
 
         Ok(())
