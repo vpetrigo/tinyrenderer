@@ -82,6 +82,17 @@ impl<T: VectorTrait<T>> Add for Vector2<T> {
     }
 }
 
+impl<T: VectorTrait<T>> Add<f32> for Vector2<T>
+where
+    f32: AsPrimitive<T>,
+{
+    type Output = Self;
+
+    fn add(self, rhs: f32) -> Self::Output {
+        Self::new(self.x + rhs.as_(), self.y + rhs.as_())
+    }
+}
+
 impl<T: VectorTrait<T>> Sub for Vector2<T> {
     type Output = Self;
 
