@@ -7,7 +7,7 @@ use std::{
 
 use tgaimage::{TGAColor, TGAImage};
 
-use crate::geometry::{UVMapF32, Vector2Int, Vector3F32, XAxis, YAxis};
+use crate::geometry::{UVMapF32, Vector2F32, Vector2Int, Vector3F32, XAxis, YAxis};
 
 #[derive(Default)]
 struct ModelFace {
@@ -129,7 +129,6 @@ impl Model {
         }
 
         self.diffusemap = Some(TGAImage::read_tga_file(filename).expect("Unable to read file"));
-        self.diffusemap.as_mut().unwrap().flip_vertically();
 
         Ok(())
     }
@@ -175,11 +174,15 @@ impl Model {
     }
 
     pub fn uv(&self, face_index: usize, vert_index: usize) -> Vector2Int {
-        let index = self.faces[face_index].uv_index[vert_index] as usize;
+        if let Some(ref diffusemap) = self.diffusemap {
+            let index = self.faces[face_index].uv_index[vert_index] as usize;
 
-        Vector2Int::new(
-            (self.uvs[index].u * self.diffusemap.as_ref().unwrap().get_width() as f32) as i32,
-            (self.uvs[index].v * self.diffusemap.as_ref().unwrap().get_height() as f32) as i32,
-        )
+            return Vector2Int::new(
+                (self.uvs[index].u * diffusemap.get_width() as f32) as i32,
+                (self.uvs[index].v * diffusemap.get_height() as f32) as i32,
+            );
+        }
+
+        panic!("Invalid access to UV buffer");
     }
 }
