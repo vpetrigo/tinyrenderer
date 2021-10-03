@@ -1,7 +1,9 @@
-use tgaimage::{TGAColor, TGAImage, TGAImageFormat};
-use tinyrenderer::geometry::{Vector3F32, Vector3Int};
+use tgaimage::{TGAImage, TGAImageFormat};
+use tinyrenderer::geometry::{Vector3F32, Vector3Int, XAxis, YAxis, ZAxis};
 use tinyrenderer::model::Model;
-use tinyrenderer::triangle_barycentric_zbuf;
+use tinyrenderer::{
+    triangle_barycentric_zbuf, triangle_barycentric_zbuf_with_texture, TextureDef, TriangleDef,
+};
 
 fn main() {
     plot_head();
@@ -13,7 +15,7 @@ fn plot_head() {
     let mut model = Model::new("african_head.obj").unwrap();
     let mut image = TGAImage::new(width, height, TGAImageFormat::RGB);
     let light_dir = Vector3F32::new(0., 0., -1.);
-    let mut z_buffer = [f32::NEG_INFINITY; 800 * 800];
+    let mut z_buffer = vec![f32::NEG_INFINITY; width as usize * height as usize];
 
     model
         .load_texture("african_head_diffuse.tga")
@@ -33,11 +35,9 @@ fn plot_head() {
 
         for j in 0..3 {
             let v0 = model.vert(face[j] as usize);
-            *screen_coords[j].get_x_as_mut() =
-                ((v0.get_x() + 1.0) * width as f32 / 2.0 + 0.5) as i32;
-            *screen_coords[j].get_y_as_mut() =
-                ((v0.get_y() + 1.0) * height as f32 / 2.0 + 0.5) as i32;
-            *screen_coords[j].get_z_as_mut() = (v0.get_z()) as i32;
+            *screen_coords[j].x_as_mut_ref() = ((v0.get_x() + 1.0) * width as f32 / 2.0) as i32;
+            *screen_coords[j].y_as_mut_ref() = ((v0.get_y() + 1.0) * height as f32 / 2.0) as i32;
+            *screen_coords[j].z_as_mut_ref() = ((v0.get_z() + 1.0) * 255.0 / 2.0) as i32;
             world_coords[j] = *v0;
         }
 
@@ -47,17 +47,15 @@ fn plot_head() {
         let intensity = n * light_dir;
 
         if intensity > 0.0 {
-            triangle_barycentric_zbuf(
-                screen_coords[0],
-                screen_coords[1],
-                screen_coords[2],
+            let texture = TextureDef(model.uv(i, 0), model.uv(i, 1), model.uv(i, 2));
+
+            triangle_barycentric_zbuf_with_texture(
+                TriangleDef(screen_coords[0], screen_coords[1], screen_coords[2]),
+                texture,
                 &mut z_buffer,
-                &TGAColor::new_rgb(
-                    (intensity * u8::MAX as f32) as u8,
-                    (intensity * u8::MAX as f32) as u8,
-                    (intensity * u8::MAX as f32) as u8,
-                ),
                 &mut image,
+                &model,
+                intensity,
             );
         }
     }
