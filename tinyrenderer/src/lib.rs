@@ -15,8 +15,8 @@ pub mod line;
 pub mod model;
 pub mod point;
 
-pub struct TriangleDef(Vector3Int, Vector3Int, Vector3Int);
-pub struct TextureDef(UVMapF32, UVMapF32, UVMapF32);
+pub struct TriangleDef(pub Vector3Int, pub Vector3Int, pub Vector3Int);
+pub struct TextureDef(pub Vector2Int, pub Vector2Int, pub Vector2Int);
 
 pub struct PointBarycentricCoords {
     pub u: f32,
@@ -315,6 +315,54 @@ fn fill_flat_triangle(
 
         for x in min_p..=max_p {
             image.set(x as u32, y as u32, color);
+        }
+    }
+}
+
+#[cfg(test)]
+mod test_renderer_lib {
+    use crate::barycentric;
+    use crate::geometry::Vector3Int;
+
+    #[test]
+    fn test_barycentric() {
+        let v1 = Vector3Int::new(0, 0, 0);
+        let v2 = Vector3Int::new(0, 2, 0);
+        let v3 = Vector3Int::new(2, 0, 0);
+        let p1 = Vector3Int::new(1, 0, 0);
+        let p2 = Vector3Int::new(0, 1, 0);
+        let p3 = Vector3Int::new(0, 0, 0);
+        let p4 = Vector3Int::new(0, 2, 0);
+        let p5 = Vector3Int::new(2, 0, 0);
+
+        if let Some(bc) = barycentric(&[v1, v2, v3], p1) {
+            assert_eq!(bc.w == 0.5 && bc.u == 0., bc.v == 0.5);
+        } else {
+            panic!("Invalid barycentric calculation");
+        }
+
+        if let Some(bc) = barycentric(&[v1, v2, v3], p2) {
+            assert_eq!(bc.w == 0.5 && bc.u == 0.5, bc.v == 0.);
+        } else {
+            panic!("Invalid barycentric calculation");
+        }
+
+        if let Some(bc) = barycentric(&[v1, v2, v3], p3) {
+            assert_eq!(bc.w == 1. && bc.u == 0., bc.v == 0.);
+        } else {
+            panic!("Invalid barycentric calculation");
+        }
+
+        if let Some(bc) = barycentric(&[v1, v2, v3], p4) {
+            assert_eq!(bc.w == 0. && bc.u == 1., bc.v == 0.);
+        } else {
+            panic!("Invalid barycentric calculation");
+        }
+
+        if let Some(bc) = barycentric(&[v1, v2, v3], p5) {
+            assert_eq!(bc.w == 0. && bc.u == 0., bc.v == 1.);
+        } else {
+            panic!("Invalid barycentric calculation");
         }
     }
 }
