@@ -2,7 +2,7 @@ use std::ops::Neg;
 
 use num::{One, Signed, Zero};
 
-use tgaimage::{TGAColor, TGAImage, TGAImageFormat, TGAImageType};
+use tgaimage::{ColorChannel, TGAColor, TGAImage, TGAImageFormat, TGAImageType};
 
 use crate::geometry::{
     NumMinMax, UVMapF32, Vector2, Vector2F32, Vector2Int, Vector3F32, Vector3Int, VectorTrait,
@@ -200,40 +200,43 @@ pub fn triangle_barycentric_zbuf(
 
 pub fn triangle_barycentric_zbuf_with_texture(
     triangle_def: TriangleDef,
-    _texture_def: TextureDef,
-    _zbuf: &mut [f32],
-    _image: &mut TGAImage,
-    _intensity: f32,
+    texture_def: TextureDef,
+    zbuf: &mut [f32],
+    image: &mut TGAImage,
+    model: &Model,
+    intensity: f32,
 ) {
-    let _points_2d = &[
+    let points_2d = &[
         Vector2::new(triangle_def.0.get_x(), triangle_def.0.get_y()),
         Vector2::new(triangle_def.1.get_x(), triangle_def.1.get_y()),
         Vector2::new(triangle_def.2.get_x(), triangle_def.2.get_y()),
     ];
-    // let points = [v1, v2, v3];
-    // let (boundary_box_min, boundary_box_max) = boundary_box_setup(
-    //     points_2d,
-    //     image.get_width() as i32,
-    //     image.get_height() as i32,
-    // );
-    // let mut z = 0.0;
-    //
-    // for x in boundary_box_min.get_x()..=boundary_box_max.get_x() {
-    //     for y in boundary_box_min.get_y()..=boundary_box_max.get_y() {
-    //         let bc_screen = barycentric_3d(&[v1, v2, v3], Vector3Int::new(x, y, z as i32));
-    //
-    //         if bc_screen.get_x() >= 0.0 && bc_screen.get_y() >= 0.0 && bc_screen.get_z() >= 0.0 {
-    //             z = (points[0].get_z() as f32 * bc_screen.get_x()
-    //                 + points[1].get_z() as f32 * bc_screen.get_y()
-    //                 + points[2].get_z() as f32 * bc_screen.get_z()) as f32;
-    //
-    //             if zbuf[(x as u32 + y as u32 * image.get_width() as u32) as usize] < z {
-    //                 zbuf[(x as u32 + y as u32 * image.get_width() as u32) as usize] = z;
-    //                 image.set(x as u32, y as u32, color);
-    //             }
-    //         }
-    //     }
-    // }
+    let points = [triangle_def.0, triangle_def.1, triangle_def.2];
+    let (boundary_box_min, boundary_box_max) = boundary_box_setup(
+        points_2d,
+        image.get_width() as i32,
+        image.get_height() as i32,
+    );
+
+    for x in boundary_box_min.get_x()..=boundary_box_max.get_x() {
+        for y in boundary_box_min.get_y()..=boundary_box_max.get_y() {
+            if let Some(bc_screen) = barycentric(&points, Vector2Int::new(x, y)) {
+                let z = (points[0].get_z() as f32 * bc_screen.w
+                    + points[1].get_z() as f32 * bc_screen.u
+                    + points[2].get_z() as f32 * bc_screen.v) as f32;
+
+                let index = (x + y * image.get_width() as i32) as usize;
+                if zbuf[index] < z {
+                    zbuf[index] = z;
+                    let uv_p = (texture_def.0 * bc_screen.w
+                        + texture_def.1 * bc_screen.u
+                        + texture_def.2 * bc_screen.v);
+                    let color = model.diffuse(uv_p);
+                    image.set(x as u32, y as u32, &(color.unwrap() * intensity));
+                }
+            }
+        }
+    }
 }
 
 fn triangle_vertices_sort(v1: &mut Vector2Int, v2: &mut Vector2Int, v3: &mut Vector2Int) {
