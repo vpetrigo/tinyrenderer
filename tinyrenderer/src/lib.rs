@@ -2,12 +2,14 @@ use std::ops::Neg;
 
 use num::{One, Signed, Zero};
 
-use tgaimage::{TGAColor, TGAImage};
+use tgaimage::{TGAColor, TGAImage, TGAImageFormat, TGAImageType};
 
 use crate::geometry::{
-    NumMinMax, UVMapF32, Vector2, Vector2Int, Vector3Int, VectorTrait, XAxis, XYAxis, YAxis, ZAxis,
+    NumMinMax, UVMapF32, Vector2, Vector2F32, Vector2Int, Vector3F32, Vector3Int, VectorTrait,
+    XAxis, XYAxis, YAxis, ZAxis,
 };
 use crate::line::Line;
+use crate::model::Model;
 use crate::point::Point;
 
 pub mod geometry;
