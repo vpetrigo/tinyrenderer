@@ -326,7 +326,7 @@ impl TGAImage {
             }
 
             let to_write = if raw {
-                (run_length * self.bytespp as u8) as usize
+                run_length as usize * (self.bytespp as u8) as usize
             } else {
                 self.bytespp as usize
             };
@@ -440,11 +440,12 @@ impl TGAImage {
             }
         };
 
-        let mut image = TGAImage::new(
-            width as u32,
-            height as u32,
-            TGAImageFormat::try_from(bitsperpixel).unwrap(),
-        );
+        let mut image = TGAImage {
+            data,
+            width: width as u32,
+            height: height as u32,
+            bytespp: TGAImageFormat::try_from(bitsperpixel).unwrap(),
+        };
         let image_descriptor =
             unsafe { ptr::read_unaligned(ptr::addr_of!(header.imagedescriptor)) };
 
@@ -502,6 +503,12 @@ impl TGAImage {
         file.write(&FOOTER)?;
 
         Ok(())
+    }
+
+    pub fn dump(&self) {
+        for b in &self.data {
+            print!("{:02x}", b);
+        }
     }
 }
 
