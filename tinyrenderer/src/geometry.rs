@@ -15,12 +15,12 @@ where
 }
 
 macro_rules! impl_vector_trait {
-    ($($t:ty),+) => {
+    ($($t:ty)+) => {
         $( impl VectorTrait<$t> for $t {} )*
     };
 }
 
-impl_vector_trait!(i32, f32);
+impl_vector_trait!(i32 f32);
 
 #[derive(Debug, Copy, Clone)]
 pub struct Vector2<T: VectorTrait<T>> {
