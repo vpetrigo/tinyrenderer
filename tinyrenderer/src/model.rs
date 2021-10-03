@@ -167,16 +167,11 @@ impl Model {
     }
 
     pub fn diffuse(&self, uv: Vector2Int) -> Option<TGAColor> {
-        if self.diffusemap.is_some() {
-            Some(
-                self.diffusemap
-                    .as_ref()
-                    .unwrap()
-                    .get(uv.get_x() as u32, uv.get_y() as u32),
-            )
-        } else {
-            None
+        if let Some(ref diffusemap) = self.diffusemap {
+            return Some(diffusemap.get(uv.get_x() as u32, uv.get_y() as u32));
         }
+
+        None
     }
 
     pub fn uv(&self, face_index: usize, vert_index: usize) -> Vector2Int {
