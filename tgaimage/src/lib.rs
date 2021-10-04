@@ -364,18 +364,15 @@ impl TGAImage {
                 // rle packet
                 let packet_size = (header ^ 0b1000_0000) + 1u8;
                 input.read_exact(&mut data[current_offset..current_offset + *bytespp as usize])?;
-                let origin = data[current_offset..current_offset + *bytespp as usize].as_ptr();
+                let origin_offset = current_offset;
                 current_offset += *bytespp as usize;
                 current_pixel += 1;
 
                 for _ in 0..packet_size - 1 {
-                    unsafe {
-                        std::ptr::copy_nonoverlapping(
-                            origin,
-                            data[current_offset..current_offset + *bytespp as usize].as_mut_ptr(),
-                            *bytespp as usize,
-                        );
-                    }
+                    data.copy_within(
+                        origin_offset..(origin_offset + *bytespp as usize),
+                        current_offset,
+                    );
 
                     current_offset += *bytespp as usize;
                     current_pixel += 1;
