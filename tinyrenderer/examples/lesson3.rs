@@ -1,9 +1,7 @@
-use tgaimage::{TGAColor, TGAImage, TGAImageFormat};
+use tgaimage::{TGAImage, TGAImageFormat};
+use tinyrenderer::{TextureDef, triangle_barycentric_zbuf_with_texture, TriangleDef};
 use tinyrenderer::geometry::{Vector3F32, Vector3Int, XAxis, YAxis, ZAxis};
 use tinyrenderer::model::Model;
-use tinyrenderer::{
-    triangle_barycentric_zbuf, triangle_barycentric_zbuf_with_texture, TextureDef, TriangleDef,
-};
 
 fn main() {
     plot_head();

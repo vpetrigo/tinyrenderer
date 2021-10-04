@@ -7,7 +7,7 @@ use std::{
 
 use tgaimage::{TGAColor, TGAImage};
 
-use crate::geometry::{UVMapF32, Vector2F32, Vector2Int, Vector3F32, XAxis, YAxis};
+use crate::geometry::{UVMapF32, Vector2Int, Vector3F32, XAxis, YAxis};
 
 #[derive(Default)]
 struct ModelFace {

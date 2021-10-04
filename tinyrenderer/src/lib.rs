@@ -2,11 +2,10 @@ use std::ops::Neg;
 
 use num::{One, Signed, Zero};
 
-use tgaimage::{ColorChannel, TGAColor, TGAImage, TGAImageFormat, TGAImageType};
+use tgaimage::{TGAColor, TGAImage};
 
 use crate::geometry::{
-    NumMinMax, UVMapF32, Vector2, Vector2F32, Vector2Int, Vector3F32, Vector3Int, VectorTrait,
-    XAxis, XYAxis, YAxis, ZAxis,
+    NumMinMax, Vector2, Vector2Int, Vector3Int, VectorTrait, XAxis, XYAxis, YAxis, ZAxis,
 };
 use crate::line::Line;
 use crate::model::Model;
@@ -228,9 +227,9 @@ pub fn triangle_barycentric_zbuf_with_texture(
                 let index = (x + y * image.get_width() as i32) as usize;
                 if zbuf[index] < z {
                     zbuf[index] = z;
-                    let uv_p = (texture_def.0 * bc_screen.w
+                    let uv_p = texture_def.0 * bc_screen.w
                         + texture_def.1 * bc_screen.u
-                        + texture_def.2 * bc_screen.v);
+                        + texture_def.2 * bc_screen.v;
                     let color = model.diffuse(uv_p);
                     image.set(x as u32, y as u32, &(color.unwrap() * intensity));
                 }
